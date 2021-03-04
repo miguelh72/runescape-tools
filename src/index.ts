@@ -33,13 +33,14 @@ export class ServersideException extends Error {
 }
 
 const DATASTORE_FOLDER = 'datastore';
+const NOT_ENOUGH_PLAYERS_URLS = 'not_enough_players_urls.txt';
 const RATE_LIMIT_PERIOD = 1000; // ms
 const MAX_RETRIES = 3; // number of retries per URL
 const DAY_TIMELAPSE = 86400000; // ms
 const WEEK_TIMELAPSE = 604800000; // ms
 const FIRST_WEEK_2020 = 1609529796557; // ms
 
-const highscoreEndpoint = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0';
+const HIGHSCORE_ENDPOINT = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0';
 
 const NUM_PROGRESS_BARS: number = 70;
 
@@ -47,6 +48,34 @@ const error = chalk.bold.red;
 const warning = chalk.bold.yellow;
 const ok = chalk.bold.green;
 const progress = chalk.bold.cyan;
+
+// TODO fix badly codependent code of NotEnoughPlayers system
+const NotEnoughPlayers = {
+    _notEnoughPlayersURLs: loadNotEnoughPlayersURLList(),
+    add: (URL: string) => {
+        NotEnoughPlayers._notEnoughPlayersURLs.push(URL);
+        saveNotEnoughPlayersURLList();
+    },
+    contains: (URL: string) => NotEnoughPlayers._notEnoughPlayersURLs.includes(URL)
+}
+function loadNotEnoughPlayersURLList(): string[] {
+    const filePath = DATASTORE_FOLDER + '/' + NOT_ENOUGH_PLAYERS_URLS;
+    if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, 'utf8').split('\n');
+    } else {
+        return [];
+    }
+}
+function saveNotEnoughPlayersURLList(): boolean {
+    try {
+        const filePath = DATASTORE_FOLDER + '/' + NOT_ENOUGH_PLAYERS_URLS;
+        fs.writeFileSync(filePath, NotEnoughPlayers._notEnoughPlayersURLs.join('\n'));
+        return true;
+    } catch (err) {
+        console.log(error(err));
+        return false;
+    }
+}
 
 /**
  * @returns True if running code in testing.
@@ -82,7 +111,7 @@ function printProgress(percentProgress: number): void {
 }
 
 function getHighscoreURL(skill: Skill, timeframe: Timeframe, startTime: number, pgNum: number): string {
-    return highscoreEndpoint + '&table=' + skill + '&time_filter=' + timeframe + '&date=' + startTime + '&page=' + pgNum;
+    return HIGHSCORE_ENDPOINT + '&table=' + skill + '&time_filter=' + timeframe + '&date=' + startTime + '&page=' + pgNum;
 }
 
 function getHighscorePageSet(skill: Skill, timeframe: Timeframe, startTime: number): string[] {
@@ -103,9 +132,7 @@ function pause<T>(ms: number, ret?: T): Promise<T> {
 async function loadSinglePage(URL: string, datastoreFolder?: string, rateLimitPeriod: number = RATE_LIMIT_PERIOD): Promise<boolean> {
     const filename = getFilenameFromURL(URL);
     const filepath = (datastoreFolder !== undefined) ? datastoreFolder + '/' + filename : filename;
-    if (fs.existsSync(filepath)) { return true; }
-
-    // TODO add list of pages without enough player, and dont query again
+    if (fs.existsSync(filepath) || NotEnoughPlayers.contains(URL)) { return true; }
 
     let result = { done: false, value: false };
     for (let retry = 0; !result.done && retry <= MAX_RETRIES; retry++) {
@@ -128,7 +155,7 @@ async function loadSinglePage(URL: string, datastoreFolder?: string, rateLimitPe
         if (!response.includes('ElectronUnknownError')) {
             result.done = true;
             if (response.includes('Sorry, there are currently no players to display')) {
-                // skip URL with not enough players to report
+                NotEnoughPlayers.add(URL);
                 console.log(warning('\nThere were not enough players at URL:\n' + URL));
                 result.value = true;
                 if (fs.existsSync(filepath)) {
@@ -192,25 +219,29 @@ async function loadSkill(sk: Skill, rateLimitPeriod?: number): Promise<boolean> 
     return loadPages(pages, getSkillName(sk), rateLimitPeriod);
 }
 
-async function update(sk: Skill, rateLimitPeriod?: number) {
-    console.log('Working on skill: ' + getSkillName(sk as Skill));
+async function update(sk: Skill, rateLimitPeriod?: number): Promise<boolean> {
+    const skillName = getSkillName(sk as Skill);
+    console.log('Working on skill: ' + chalk.bold(skillName));
     return loadSkill(sk, rateLimitPeriod).then(result => {
-        console.log({ result });
+        if (!result) { console.log(error(`\nFailed to update ${skillName} skill.`)) }
         return result;
     });
 }
 
-async function updateAll(rateLimitPeriod?: number) {
+async function updateAll(rateLimitPeriod?: number): Promise<boolean> {
+    const results: boolean[] = [];
     for (const [_, skillNum] of Object.entries(skill)) {
-        await update(skillNum, rateLimitPeriod);
+        results.push(await update(skillNum, rateLimitPeriod));
     }
+    return results.reduce((acc, res) => acc && res);
 }
 
 async function verifyDatabaseIntegrity() {
     // Verify no invalid subdirectories
     const directories = fs.readdirSync(DATASTORE_FOLDER);
+    const exceptions = [NOT_ENOUGH_PLAYERS_URLS];
     for (let dir of directories) {
-        if ((skill as KeyValueSet<Skill>)[dir] === undefined) {
+        if ((skill as KeyValueSet<Skill>)[dir] === undefined && !exceptions.includes(dir)) {
             console.log(error(`Invalid subdirectory (not named after skill): ${dir}`));
             return false;
         }
@@ -240,4 +271,23 @@ async function verifyDatabaseIntegrity() {
 
 //(async () => console.log(await verifyDatabaseIntegrity()))();
 
-updateAll(5000);
+//update(skill.runecrafting);
+
+
+updateAll(5000)
+    .then(async (loadedAll) => {
+        if (await verifyDatabaseIntegrity()) {
+            console.log(error('Datastore is not valid.'));
+        }
+        if (!loadedAll) {
+            console.log(error('Could not update all skills.'));
+        } else {
+            console.log(ok('All skills are up to date.'));
+        }
+    });
+
+
+/**
+ * TODO list
+ * - Take into account double exp weeks, full list available in wiki.
+ */
