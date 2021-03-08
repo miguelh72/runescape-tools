@@ -5,7 +5,6 @@ import { integrate, isValidUrl, TabularFunction, WEEK_TIMELAPSE } from "./utils"
 
 const DOUBLE_EXP_EVENTS: [number, number][] = [ // TODO load this from wiki
     ['19 February 2021 UTC-12:00', '1 March 2021 UTC-12:00'],
-    ['25 December 2020 UTC-00:00', '1 January 2021 UTC-00:00'],
     ['6 November 2020 UTC-12:00', '16 November 2020 UTC-12:00'],
     ['7 August 2020 UTC-12:00', '17 August 2020 UTC-12:00'],
     ['8 May 2020 UTC-12:00', '18 May 2020 UTC-12:00'],
@@ -77,11 +76,6 @@ async function getWeeklyExpGains(skill: Skill): Promise<TabularFunction> {
 
         expTimeSeries.addDatapoint(estTotalWeekExp, timeStamp);
     }
-
-    console.log(expTimeSeries.f.join('\n')); // TODO rm
-    console.log();
-    console.log(expTimeSeries.x.join('\n'));
-
     return expTimeSeries;
 }
 

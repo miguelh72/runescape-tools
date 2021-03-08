@@ -1,6 +1,6 @@
 {
   "name": "runescape-tools",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Tools used to analyze Runescape API for advantages in-game.",
   "main": "index.js",
   "scripts": {

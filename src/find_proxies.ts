@@ -15,7 +15,7 @@ async function getWorkingProxyList(): Promise<string[]> {
     let proxyList: string[] = pl.list;
 
     const workingProxyList: string[] = [];
-    await Promise.all(proxyList.map(async (proxy, index) => {
+    await Promise.all(proxyList.map(async proxy => {
         let nightmare = new Nightmare({
             switches: {
                 'proxy-server': proxy,

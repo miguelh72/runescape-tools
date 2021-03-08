@@ -1,6 +1,7 @@
 import crawler from "../crawler";
+import persistence from "../persistence";
 import { CRAWL_WEEK_START, PROXY_LIST } from "../settings";
-import { Skill, Timeframe } from "../types";
+import { HtmlPage, Skill, Timeframe } from "../types";
 import { internetingishard, expGainPageExample } from './results';
 
 test('Generate highscore URL set', () => {
@@ -35,16 +36,21 @@ test('Load html page', async () => {
     expect(page.url).toEqual(internetingishard.url);
     expect(page.html.replace(/\s/g, '')).toEqual(internetingishard.html.replace(/\s/g, ''));
 });
-
+/*
 test('Load html page through a proxy', async () => {
     const page = await crawler.loadHtmlPage(internetingishard.url, true);
     expect(page.url).toEqual(internetingishard.url);
     expect(page.html.replace(/\s/g, '')).toEqual(internetingishard.html.replace(/\s/g, ''));
 }, 30000);
-
+*/
 test('Verify exp gain page', () => {
     expect(crawler.isValidExpGainPage(expGainPageExample)).toBe(true);
     expect(crawler.isValidExpGainPage(internetingishard)).toBe(false);
+});
+
+test('Proxy error count', () => {
+    crawler.__tests__.logProxyErrorEvent(crawler.__tests__._proxyErrorCounter[0][1]);
+    expect(crawler.__tests__._proxyErrorCounter[0][0]).toEqual(1);
 });
 
 test('Retrieve all weekly exp gain pages for a skill', async () => {
@@ -53,13 +59,16 @@ test('Retrieve all weekly exp gain pages for a skill', async () => {
     */
 
     const skill = Skill.runecrafting;
-    const allUrls = crawler.__tests__.geSkillHighscoreUrlSet(skill, Timeframe.weekly, CRAWL_WEEK_START);
-    const allPages = await crawler.getSkillWeeklyExpGainHtmlPages(skill);
+    const allUrls: string[] = crawler.__tests__.geSkillHighscoreUrlSet(skill, Timeframe.weekly, CRAWL_WEEK_START);
+    const allPages: HtmlPage[] = await crawler.getSkillWeeklyExpGainHtmlPages(skill);
 
-    // TODO test all pages were returned or did not have enough players
-});
+    function urlInPages(pages: HtmlPage[], url: string): boolean {
+        return pages.some(page => page.url === url);
+    }
 
-test('Proxy error count', () => {
-    crawler.__tests__.logProxyErrorEvent(crawler.__tests__._proxyErrorCounter[0][1]);
-    expect(crawler.__tests__._proxyErrorCounter[0][0]).toEqual(1);
+    //  all pages were returned or did not have enough players
+    allUrls.forEach(url => {
+        const wasProcessed = persistence.isEndpointWithoutEnoughPlayers(url) || urlInPages(allPages, url);
+        expect(wasProcessed).toBe(true);
+    });
 });
