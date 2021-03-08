@@ -2,7 +2,6 @@ import crawler from '../crawler';
 import persistence from '../persistence';
 import { Skill } from '../types';
 import { warning } from '../utils';
-import { internetingishard } from './results';
 
 // Prepare for crawler.test.ts
 //crawler.getSkillWeeklyExpGainHtmlPages(Skill.runecrafting);
@@ -20,10 +19,3 @@ import { internetingishard } from './results';
             });
     }
 })();
-
-/*
-(async () => {
-    const page = await crawler.loadHtmlPage(internetingishard.url, true);
-    console.log(page)
-})();
-*/

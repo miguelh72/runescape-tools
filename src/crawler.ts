@@ -10,6 +10,8 @@ const HIGHSCORE_PAGENUMS_TO_SEARCH: number[] = [1, 51, 101, 201, 301, 401, 501, 
 const MAX_RETRIES = 3; // number of retries per URL
 
 let _rateLimitPeriod: number = RATE_LIMIT_PERIOD;
+const _proxyErrorCounter: [number, string][] = Array.from({ length: PROXY_LIST.length }, (_, i) => [0, PROXY_LIST[i]]);
+const PROXY_DUMP_LIMIT = 5; // Remove proxies that fail more than this number of times.
 
 /**
  * Error thown when electron browser has an unknown error.
@@ -50,14 +52,47 @@ function geSkillHighscoreUrlSet(skill: Skill, timeframe: Timeframe, startTime: n
  * Generator of proxies from proxy list in settings module. Cycles through each proxy in the list.
  */
 const proxyGenerator: Generator<string> = (function* getProxyGenerator(): Generator<string> {
-    const numProxies = PROXY_LIST.length;
     let usingProxyNumber: number = 0;
     while (true) {
+        if (usingProxyNumber >= PROXY_LIST.length) { usingProxyNumber %= PROXY_LIST.length; }
         yield PROXY_LIST[usingProxyNumber];
         usingProxyNumber++;
-        usingProxyNumber %= numProxies;
     }
 })();
+
+/**
+ * Log navigation error for a proxy. If number of errors for a proxy exceeds PROXY_DUMP_LIMIT program will stop using that proxy.
+ * @param proxy Proxy to log error event for.
+ */
+function logProxyErrorEvent(proxy: string): void {
+    let indexErrorCounter = 0;
+    for (const pxy of _proxyErrorCounter) {
+        if (proxy === pxy[1]) {
+            pxy[0]++;
+            // Dump proxy if exceed limit
+            if (pxy[0] >= PROXY_DUMP_LIMIT) {
+                let index = PROXY_LIST.indexOf(pxy[1]);
+                PROXY_LIST.splice(index, 1)
+                _proxyErrorCounter.splice(indexErrorCounter, 1);
+                console.log(error(`\nDumped proxy ${pxy[1]} due to too many errors.`));
+            }
+            return;
+        }
+        indexErrorCounter++;
+    }
+    throw new Error('proxy was not found in PROXY_LIST.');
+}
+
+/**
+ * Print to console proxies in descending order of number of error events.
+ * @param top The top number of proxies, by number of error events, to display.
+ */
+function printProxyErrorCount(top: number = PROXY_LIST.length): void {
+    if (top !== undefined && (typeof top !== 'number' || top < 0 || top > PROXY_LIST.length)) { throw new TypeError('top must be a number greater than 0 and less than the number of proxies.'); }
+
+    _proxyErrorCounter.sort((a, b) => b[0] - a[0]);
+    console.log({ proxyErrorCount: _proxyErrorCounter.slice(0, top) });
+}
 
 /**
  * Download HTML page, after body loads all dynamic content including Javascript code.
@@ -89,9 +124,10 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
         .then((response: string) => response) // TODO is this needed?
         .catch((err: Error) => {
             if (useProxy) {
-                throw new ElectronUnknownError(`Unknown error using proxy: ${crawlerOptions.switches['proxy-server']}\n${err.name}\n${err.message}`);
+                logProxyErrorEvent(crawlerOptions.switches['proxy-server']);
+                throw new ElectronUnknownError(`Error using proxy: ${crawlerOptions.switches['proxy-server']}. ${err.message}`);
             } else {
-                throw new ElectronUnknownError(err.name + '\n' + err.message);
+                throw new ElectronUnknownError(err.name + ': ' + err.message);
             }
         });
 
@@ -132,35 +168,52 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
         pages.concat(geSkillHighscoreUrlSet(skill, Timeframe.weekly, weekStartTime)), []);
 
     const htmlPages: HtmlPage[] = [];
+    let urlIndex = 0;
     printProgress(0);
-    for (let [indexAsString, url] of Object.entries(allWeeksHighscoreUrlSet)) {
-        if (!persistence.isEndpointWithoutEnoughPlayers(url)) {
-            if (persistence.isInStorage(url)) {
-                const html = persistence.getExpGainPageFromUrl(url);
-                if (html === null) { throw new Error('Datastore did not return HtmlPage after confirming it existed.'); }
-                htmlPages.push(html);
+    while (urlIndex < allWeeksHighscoreUrlSet.length) {
+        const loadPromises: Promise<HtmlPage | undefined>[] = [];
+        for (let i = 0; urlIndex < allWeeksHighscoreUrlSet.length && i < PROXY_LIST.length; i++) {
+            const url = allWeeksHighscoreUrlSet[urlIndex];
+            urlIndex++;
+            if (!persistence.isEndpointWithoutEnoughPlayers(url)) {
+                if (persistence.isInStorage(url)) {
+                    const html = persistence.getExpGainPageFromUrl(url);
+                    if (html === null) { throw new Error('Datastore did not return HtmlPage after confirming it existed.'); }
+                    htmlPages.push(html);
+                    i--; // Proxy was not used
+                } else {
+                    loadPromises.push(
+                        loadHtmlPage(url, true)
+                            .then(page => {
+                                if (page !== undefined) {
+                                    if (isValidExpGainPage(page)) {
+                                        persistence.saveHtmlPage(page);
+                                        return page;
+                                    }
+                                } else {
+                                    console.log(error(`\nServer responded with critical error.\n At URL: ${url}`));
+                                }
+                                return undefined;
+                            }).catch((err: Error) => {
+                                // Allow failure with notification. This way you benefit from other proxies running in parallel.
+                                console.log(warning('\n' + err.message));
+                                return undefined;
+                            }));
+                }
             } else {
-                let html: HtmlPage | undefined;
-                for (let retry = 0; retry <= MAX_RETRIES; retry++) {
-                    html = await loadHtmlPage(url, true);
-                    if (html !== undefined) {
-                        if (isValidExpGainPage(html)) {
-                            persistence.saveHtmlPage(html);
-                            htmlPages.push(html);
-                            break;
-                        } else if (persistence.isEndpointWithoutEnoughPlayers(url)) {
-                            // May have been updated in isValidExpGainPage call.
-                            break;
-                        }
-                    }
-                }
-                if (html === undefined) {
-                    console.log(error(`\nServer continues to responded with critical error after ${MAX_RETRIES} attempts.\n At URL: ${url}`));
-                }
+                i--; // Proxy was not used
             }
         }
-        const index = parseInt(indexAsString);
-        printProgress(Math.round((index / allWeeksHighscoreUrlSet.length) * 100));
+        printProgress(Math.round((urlIndex / allWeeksHighscoreUrlSet.length) * 100));
+        await Promise.all(loadPromises)
+            .then(pages => {
+                pages.forEach(page => {
+                    if (page !== undefined) { htmlPages.push(page); }
+                })
+            }
+            ).then(() => {
+                printProgress(Math.round((urlIndex / allWeeksHighscoreUrlSet.length) * 100));
+            });
     }
     printProgress(100);
     return htmlPages;
@@ -189,6 +242,7 @@ export default {
     getSkillWeeklyExpGainHtmlPages,
     getAllExpGainHtmlPages,
     isValidExpGainPage,
+    printProxyErrorCount,
 
     /**
      * Do not use these functions outside of testing.
@@ -196,5 +250,7 @@ export default {
     __tests__: {
         geSkillHighscoreUrlSet,
         proxyGenerator,
+        logProxyErrorEvent,
+        _proxyErrorCounter
     }
 };

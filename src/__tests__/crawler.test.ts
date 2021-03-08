@@ -54,6 +54,12 @@ test('Retrieve all weekly exp gain pages for a skill', async () => {
 
     const skill = Skill.runecrafting;
     const allUrls = crawler.__tests__.geSkillHighscoreUrlSet(skill, Timeframe.weekly, CRAWL_WEEK_START);
-    //const allPages = await crawler.getSkillWeeklyExpGainHtmlPages(skill);
+    const allPages = await crawler.getSkillWeeklyExpGainHtmlPages(skill);
+
     // TODO test all pages were returned or did not have enough players
+});
+
+test('Proxy error count', () => {
+    crawler.__tests__.logProxyErrorEvent(crawler.__tests__._proxyErrorCounter[0][1]);
+    expect(crawler.__tests__._proxyErrorCounter[0][0]).toEqual(1);
 });
