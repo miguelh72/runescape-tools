@@ -25,7 +25,7 @@ test('Save, verify existence, and retrieve exp gain page.', async () => {
 
 test('Verify data store integrity', async () => {
     expect(await persistence.verifyDatabaseIntegrity()).toBe(true);
-});
+}, 30000);
 
 test('Load and save item list', () => {
     // Test assumes this was ran beforehand and simply confirms all itesm are loaded.

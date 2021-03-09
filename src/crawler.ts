@@ -1,11 +1,12 @@
 import Nightmare from "nightmare";
 import parse from "node-html-parser";
 import { HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
-import { error, bold, isValidUrl, pause, printProgress, warning, WEEK_TIMELAPSE, TabularFunction, ok } from "./utils";
+import { error, bold, pause, printProgress, warning, WEEK_TIMELAPSE, TabularFunction, ok } from "./utils";
 import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD } from "./settings";
 import persistence from "./persistence";
 import got, { OptionsOfJSONResponseBody } from "got";
 import tunnel from 'tunnel';
+import validate from "./validate";
 
 const HIGHSCORE_ENDPOINT: string = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0';
 const HIGHSCORE_PAGENUMS_TO_SEARCH: number[] = [1, 51, 101, 201, 301, 401, 501, 1001, 2001, 3001];
@@ -44,8 +45,8 @@ function setRateLimitPeriod(ms: number) {
  * @param startTime Unix time within Timeframe to search.
  */
 function geSkillHighscoreUrlSet(skill: Skill, timeframe: Timeframe, startTime: number): string[] {
-    if (skill === undefined || typeof skill !== 'number') { throw new RangeError('Skill must be supplied through enum Skill.'); }
-    if (timeframe === undefined || typeof timeframe !== 'number') { throw new RangeError('Timeframe must be supplied through enum Timeframe.'); }
+    validate.skill(skill);
+    validate.timeframe(timeframe);
     if (startTime < new Date('01/01/2010').getTime()) { throw new RangeError('Start time must UNIX time in ms after the year 2010.') }
 
     return HIGHSCORE_PAGENUMS_TO_SEARCH
@@ -106,7 +107,7 @@ function printProxyErrorCount(top: number = PROXY_LIST.length): void {
  * @throws ElectronUnknownError
  */
 async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<HtmlPage> {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
     if (useProxy !== undefined && typeof useProxy !== 'boolean') { throw new TypeError('useProxy must be a boolean toggle.'); }
 
     const crawlerOptions: IConstructorOptionsComplete = {
@@ -146,9 +147,7 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
  * @param htmlPage Html page to be checked.
  */
 function isValidExpGainPage(htmlPage: HtmlPage): boolean {
-    if (htmlPage.html === undefined || typeof htmlPage.html !== 'string' || htmlPage.url === undefined || typeof htmlPage.url !== 'string') {
-        throw new TypeError('htmlPage must implement HtmlPage interface.');
-    }
+    try { validate.htmlPage(htmlPage); } catch (_) { return false; }
 
     if (htmlPage.html.includes('Sorry, there are currently no players to display')) {
         persistence.saveEndpointWithoutEnoughPlayers(htmlPage.url);
@@ -162,7 +161,7 @@ function isValidExpGainPage(htmlPage: HtmlPage): boolean {
  * @param skill Skill for which to load pages.
  */
 async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]> {
-    if (skill === undefined || typeof skill !== 'number') { throw new RangeError('Skill must be supplied through enum Skill.'); }
+    validate.skill(skill);
 
     const oneWeekBeforeToday = Date.now() - WEEK_TIMELAPSE;
     const weeksStartTime = [CRAWL_WEEK_START];
@@ -176,6 +175,7 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
     const htmlPages: HtmlPage[] = [];
     let urlIndex = 0;
     printProgress(0);
+    let hadProxyErrorEvent = false;
     while (urlIndex < allWeeksHighscoreUrlSet.length) {
         const loadPromises: Promise<HtmlPage | undefined>[] = [];
         for (let i = 0; urlIndex < allWeeksHighscoreUrlSet.length && i < PROXY_LIST.length; i++) {
@@ -203,6 +203,7 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
                             }).catch((err: Error) => {
                                 // Allow failure with notification. This way you benefit from other proxies running in parallel.
                                 console.log(warning('\n' + err.message));
+                                hadProxyErrorEvent = true;
                                 return undefined;
                             }));
                 }
@@ -222,7 +223,9 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
             });
     }
     printProgress(100);
-    printProxyErrorCount();
+    if (hadProxyErrorEvent) {
+        printProxyErrorCount();
+    }
     return htmlPages;
 }
 

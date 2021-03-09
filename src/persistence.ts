@@ -2,7 +2,8 @@ import fs from 'fs';
 import parse from 'node-html-parser';
 import { DATASTORE_FOLDER, ITEM_DB_NAME } from "./settings";
 import { HtmlPage, ItemCategory, Skill } from './types';
-import { error, isValidUrl, validateItemChild } from "./utils";
+import { error } from "./utils";
+import validate from './validate';
 
 const NOT_ENOUGH_PLAYERS_FILENAME = 'not_enough_players.txt';
 
@@ -35,7 +36,7 @@ function saveNotEnoughPlayersURLList(): void {
  * @param url Url to be checked.
  */
 function isEndpointWithoutEnoughPlayers(url: string): boolean {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
 
     return _notEnoughPlayersURLs.includes(url);
 }
@@ -45,7 +46,7 @@ function isEndpointWithoutEnoughPlayers(url: string): boolean {
  * @param url Url to be saved.
  */
 function saveEndpointWithoutEnoughPlayers(url: string): void {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
 
     _notEnoughPlayersURLs.push(url);
     saveNotEnoughPlayersURLList();
@@ -56,7 +57,7 @@ function saveEndpointWithoutEnoughPlayers(url: string): void {
  * @param url URL to derive filename from.
  */
 function getFilenameFromURL(url: string): string {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
 
     let filename = url.replace('http://', '');
     filename = filename.replace('https://', '');
@@ -69,6 +70,8 @@ function getFilenameFromURL(url: string): string {
  * @param url URL to derive filepath from.
  */
 function getFilepathFromUrl(url: string): string {
+    validate.url(url);
+
     let subFolder: string | undefined;
     if (url.includes('runescape.com/m=hiscore')) {
         const tableStartIndex = url.indexOf('&table=') + 7;
@@ -88,7 +91,7 @@ function getFilepathFromUrl(url: string): string {
  * @param url URL to check if HtmlPage exists in storage.
  */
 function isInStorage(url: string): boolean {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
 
     return fs.existsSync(getFilepathFromUrl(url));
 }
@@ -98,9 +101,7 @@ function isInStorage(url: string): boolean {
  * @param htmlPage HtmlPage to be saved to storage.
  */
 function saveHtmlPage(htmlPage: HtmlPage): void {
-    if (htmlPage.html === undefined || typeof htmlPage.html !== 'string' || htmlPage.url === undefined || typeof htmlPage.url !== 'string') {
-        throw new TypeError('htmlPage must implement HtmlPage interface.');
-    }
+    validate.htmlPage(htmlPage);
 
     const filepath = getFilepathFromUrl(htmlPage.url);
     fs.writeFileSync(filepath, htmlPage.html);
@@ -111,7 +112,7 @@ function saveHtmlPage(htmlPage: HtmlPage): void {
  * @param url URL for which to retrieve exp gain HTML page for.
  */
 function getExpGainPageFromUrl(url: string): HtmlPage | null {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
 
     const filepath = getFilepathFromUrl(url);
     if (!fs.existsSync(filepath)) {
@@ -167,17 +168,7 @@ async function verifyDatabaseIntegrity() {
 function validateItemCategoryArray(itemList: ItemCategory[]): void {
     if (!(itemList instanceof Array)) { throw new Error('Item list was not an array.'); }
     itemList.forEach(itemCategory => {
-        if (typeof itemCategory.id !== 'number' || typeof itemCategory.name !== 'string' || !(itemCategory.items instanceof Array)) {
-            throw new Error('ItemCategory did not match interface.');
-        }
-        itemCategory.items.forEach(item => {
-            try {
-                validateItemChild(item);
-                if ((item as any).geCategory !== undefined) { throw new Error('item implemented Item interface instead of ItemCategoryChild interface.'); }
-            } catch (err) {
-                throw new Error('ItemCategoryChild did not match interface.' + err.message);
-            }
-        });
+        validate.itemCategory(itemCategory)
     });
 }
 

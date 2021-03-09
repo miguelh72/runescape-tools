@@ -61,10 +61,13 @@ export interface HtmlPage {
 }
 
 /**
- * Grand Exchange item.
+ * Extracted highscore experience gain page.
  */
-export interface Item extends ItemCategoryChild {
-    geCategory: { id: number, name: string },
+export interface ExpPage {
+    url: string,
+    exp: number,
+    periodStart: number,
+    pageNum: number
 }
 
 /**
@@ -75,6 +78,13 @@ export interface ItemCategoryChild {
     name: string,
     description: string,
     members: boolean
+}
+
+/**
+ * Grand Exchange item.
+ */
+export interface Item extends ItemCategoryChild {
+    geCategory: { id: number, name: string },
 }
 
 /**

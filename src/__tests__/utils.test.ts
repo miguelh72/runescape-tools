@@ -1,4 +1,4 @@
-import { integrate, isInTesting, isValidUrl, pause, TabularFunction } from "../utils";
+import { integrate, isInTesting, pause, TabularFunction } from "../utils";
 
 test('Know program is in test mode', () => {
     expect(isInTesting()).toBe(true);
@@ -52,26 +52,6 @@ test('Numerical definite integration', () => {
     expect(integrate(f)).toEqual((length - 1) * (length - 1) * 0.5)
     expect(integrate(f, x)).toEqual((length - 1) * (length - 1))
     expect(integrate(f, x, fo)).toEqual((length - 1) * (length - 1) + fo)
-});
-
-test('Validate URL', () => {
-    ([
-        ['http://www.google-com.123.com', true],
-        ['http://www.google-com.123', false],
-        ['https://www.google-com.com', true],
-        ['http://google-com.com', true],
-        ['http://google.com', true],
-        ['google.com', false],
-        ['http://www.gfh.', false],
-        ['http://www.gfh.c', false],
-        ['http://www.gfh:800000', false],
-        ['www.google.com ', false],
-        ['http://google', false],
-        ['//cdnblabla.cloudfront.net/css/app.css', true],
-        ['http://google.net', true],
-    ] as [string, boolean][]).map(testRow => {
-        expect(isValidUrl(testRow[0])).toBe(testRow[1]);
-    });
 });
 
 test('Using tabular functions', () => {

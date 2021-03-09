@@ -1,7 +1,8 @@
 import parse from "node-html-parser";
 import crawler from "./crawler";
 import { HtmlPage, Skill } from "./types";
-import { integrate, isValidUrl, TabularFunction, WEEK_TIMELAPSE } from "./utils";
+import { integrate, TabularFunction, WEEK_TIMELAPSE } from "./utils";
+import validate from "./validate";
 
 const DOUBLE_EXP_EVENTS: [number, number][] = [ // TODO load this from wiki
     ['19 February 2021 UTC-12:00', '1 March 2021 UTC-12:00'],
@@ -15,7 +16,8 @@ const DOUBLE_EXP_EVENTS: [number, number][] = [ // TODO load this from wiki
 ].map((event) => [new Date(event[0]).getTime(), new Date(event[1]).getTime()]);
 
 function getTimestampFromUrl(url: string): number {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
+
     let dateStartIndex = url.indexOf('&date=');
     if (dateStartIndex === -1) { throw new Error('URL does not contain date parameter'); }
     dateStartIndex += 6;
@@ -25,7 +27,8 @@ function getTimestampFromUrl(url: string): number {
 }
 
 function getPageNumberFromUrl(url: string): number {
-    if (!isValidUrl(url)) { throw new RangeError('URL is not valid.'); }
+    validate.url(url);
+
     let pageNumStartIndex = url.indexOf('&page=');
     if (pageNumStartIndex === -1) { throw new Error('URL does not contain page parameter'); }
     pageNumStartIndex += 6;
@@ -33,6 +36,7 @@ function getPageNumberFromUrl(url: string): number {
 }
 
 function getPageTotalExp(page: HtmlPage): number {
+    validate.htmlPage(page);
     if (!crawler.isValidExpGainPage(page)) { throw new TypeError('Page must be a valid highscore experience gain page.'); }
 
     return parse(page.html)
@@ -49,7 +53,7 @@ function isDoubleExpWeek(weekStart: number): boolean {
 }
 
 async function getWeeklyExpGains(skill: Skill): Promise<TabularFunction> {
-    if (skill === undefined || typeof skill !== 'number') { throw new RangeError('Skill must be supplied through enum Skill.'); }
+    validate.skill(skill);
 
     const htmlPages: HtmlPage[] = await crawler.getSkillWeeklyExpGainHtmlPages(skill);
     const timeStampGroupedPages: { [key: number]: HtmlPage[] } = htmlPages.reduce((grouped: { [key: number]: HtmlPage[] }, page: HtmlPage) => {
