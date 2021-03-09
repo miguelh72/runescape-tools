@@ -44,7 +44,7 @@ function htmlPage(htmlPage: HtmlPage): void {
     } catch (_) {
         throw new TypeError('HtmlPage url is not in a valid format.');
     }
-    if (!/<!doctype html>[\s\S]*<html[\s\S]*<body[\s\S]*<\/body[\s\S]*<\/html/i.test(htmlPage.html)) {
+    if (!/<html[\s\S]*<body[\s\S]*<\/body[\s\S]*<\/html/i.test(htmlPage.html)) {
         throw new TypeError('HtmlPage html is not valid HTML.');
     }
 }
@@ -116,7 +116,16 @@ function itemCategory(itemCategory: ItemCategory): void {
     }
 }
 
-// TODO add proxy validation function
+/**
+ * Validate a string representing a host:port pattern for a proxy.
+ * @param proxy Proxy string to be validated.
+ * @throws TypeError thrown if proxy is not valid.
+ */
+function proxy(proxy: string) {
+    if (!/^\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b:\d{2,5}$/.test(proxy)) {
+        throw new TypeError('Proxy is not in a valid format.');
+    }
+}
 
 /**
  * Validation module. We follow ideology that when a parameter is not of correct type, this is a semantic error, and a TypeError will be thrown.
@@ -131,4 +140,5 @@ export default {
     itemCategoryChild,
     item,
     itemCategory,
+    proxy,
 };

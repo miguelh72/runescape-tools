@@ -129,7 +129,10 @@ function getExpGainPageFromUrl(url: string): HtmlPage | null {
 async function verifyDatabaseIntegrity() {
     // Verify no invalid subdirectories
     const directories = fs.readdirSync(DATASTORE_FOLDER);
-    const exceptions = [NOT_ENOUGH_PLAYERS_FILENAME];
+    const exceptions = [
+        NOT_ENOUGH_PLAYERS_FILENAME,
+        NOT_ENOUGH_PLAYERS_FILENAME.slice(0, NOT_ENOUGH_PLAYERS_FILENAME.length - 4) + '_backup.txt'
+    ];
     for (let dir of directories) {
         if (Skill[dir as any] === undefined && !exceptions.includes(dir)) {
             console.log(error(`Invalid subdirectory (not named after skill): ${dir}`));
@@ -151,7 +154,12 @@ async function verifyDatabaseIntegrity() {
 
     // Verify html pages
     for (let index = 0; index < files.length; index++) {
-        const isProperFile = parse(files[index]).querySelector('div.tableWrap') !== null;
+
+        let isProperFile: boolean = false;
+        try {
+            validate.htmlPage({ url: 'http://www.valid.com', html: files[index] });
+            isProperFile = parse(files[index]).querySelector('div.tableWrap') !== null;
+        } catch (_) { }
 
         if (!isProperFile) {
             console.log(error(`Incorrect file found at path:\n${filePaths[index]}`));

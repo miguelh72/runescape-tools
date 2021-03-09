@@ -132,3 +132,27 @@ test('Validate ItemCategory', () => {
     expect(() => validate.itemCategory({ id: 1, name: 'item category', items: [{ id: 1, name: 'item', description: 1, members: false }] } as any)).toThrowError(TypeError);
     expect(() => validate.itemCategory({ id: 1, name: 'item category', items: [{ id: 1, name: 'item', description: 'an item', members: 'false' }] } as any)).toThrowError(TypeError);
 });
+
+test('Validate proxy string format', () => {
+    const validProxies = [
+        '84.17.51.209:3128',
+        '37.235.97.16:3128',
+        '138.199.31.79:3128',
+        '51.158.180.179:8811',
+        '37.120.133.135:3128',
+        '34.92.50.186:3128',
+        '212.98.243.155:3128',
+        '51.158.107.202:9999',
+    ];
+    const invalidProxies = [
+        '17.51.209:3128',
+        '37.235.97.16:',
+        '138.199.31.79.3128',
+        '51.158.180.1.179:8811',
+        '37.120.133.135:3128.2',
+        'not a proxy',
+        ''
+    ];
+    validProxies.forEach(proxy => expect(validate.proxy(proxy)).toBeUndefined());
+    invalidProxies.forEach(proxy => expect(() => validate.proxy(proxy)).toThrowError(TypeError));
+});

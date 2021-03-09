@@ -70,6 +70,8 @@ const proxyGenerator: Generator<string> = (function* getProxyGenerator(): Genera
  * @param proxy Proxy to log error event for.
  */
 function logProxyErrorEvent(proxy: string): void {
+    validate.proxy(proxy);
+
     let indexErrorCounter = 0;
     for (const pxy of _proxyErrorCounter) {
         if (proxy === pxy[1]) {
@@ -254,7 +256,7 @@ async function getAllExpGainHtmlPages(): Promise<HtmlPage[][]> {
  */
 async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<TabularFunction | undefined> {
     if (typeof itemID !== 'number' || itemID < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
-    if (proxy !== undefined && (typeof proxy !== 'string' || proxy.split(':').length !== 2)) { throw new TypeError('proxy must be a string with host and post components.'); }
+    validate.proxy(proxy as string);
     if (typeof numRetries !== 'number' || numRetries < 0) { throw new TypeError('numRetries must be a number greater than zero.'); }
 
     const options: OptionsOfJSONResponseBody = {

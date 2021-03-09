@@ -47,6 +47,8 @@ function getPageTotalExp(page: HtmlPage): number {
 }
 
 function isDoubleExpWeek(weekStart: number): boolean {
+    if (typeof weekStart !== 'number') { throw new TypeError('weekStart must be of type number.'); }
+
     return DOUBLE_EXP_EVENTS.reduce((isDoubleExpWeek: boolean, [doubleExpWeekStart, doubleExpWeekEnd]): boolean => {
         return isDoubleExpWeek || ((weekStart >= doubleExpWeekStart) && (weekStart < doubleExpWeekEnd));
     }, false);

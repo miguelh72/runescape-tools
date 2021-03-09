@@ -3,6 +3,7 @@ const ProxyList = require('proxy-sources');
 import chalk from 'chalk';
 import { IConstructorOptionsComplete } from './types';
 import crawler from './crawler';
+import validate from './validate';
 
 const url = 'https://secure.runescape.com/m=hiscore/ranking?category_type=0&table=0&time_filter=1&page=1';
 const NUM_CHECKS = 2;
@@ -12,7 +13,10 @@ async function getWorkingProxyList(): Promise<string[]> {
         checker: true,
         timeout: 10000
     });
-    let proxyList: string[] = pl.list;
+    let proxyList: string[] = pl.list.map((proxy: string) => {
+        validate.proxy(proxy);
+        return proxy;
+    });
     console.log(chalk.bold(`Trying to find working proxies. Searching list of ${proxyList.length}`));
 
     let workingProxyList: string[] = [];
