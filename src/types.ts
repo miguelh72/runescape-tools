@@ -59,3 +59,29 @@ export interface HtmlPage {
     url: string,
     html: string,
 }
+
+/**
+ * Grand Exchange item.
+ */
+export interface Item extends ItemCategoryChild {
+    geCategory: { id: number, name: string },
+}
+
+/**
+ * Grand exchange item without category to allow for more efficient database storage.
+ */
+export interface ItemCategoryChild {
+    id: number,
+    name: string,
+    description: string,
+    members: boolean
+}
+
+/**
+ * Grand exchange item category.
+ */
+export interface ItemCategory {
+    id: number,
+    name: string,
+    items: ItemCategoryChild[]
+}

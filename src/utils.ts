@@ -1,5 +1,6 @@
 import readline from 'readline';
 import chalk, { Chalk } from "chalk";
+import { Item, ItemCategoryChild } from './types';
 
 const NUM_PROGRESS_BARS: number = 70;
 
@@ -197,4 +198,35 @@ export function isValidUrl(url: string) {
     if (typeof url !== 'string') { throw new TypeError('URL must be a string.'); }
 
     return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(url);
+}
+
+/**
+ * Validate a storage Grand Exchange item to adhere to ItemCategoryChild interface. Throws errors if not valid.
+ * @param item ItemCategoryChild to be validated. These are the items stored by persistence module.
+ */
+export function validateItemChild(item: ItemCategoryChild): void {
+    if (item.id === undefined) { throw new TypeError('Item id is undefined.'); }
+    if (typeof item.id !== 'number') { throw new TypeError('Item id is not of type number.'); }
+
+    if (item.name === undefined) { throw new TypeError('Item name is undefined.'); }
+    if (typeof item.name !== 'string') { throw new TypeError('Item name is not of type string.'); }
+
+    if (item.description === undefined) { throw new TypeError('Item description is undefined.'); }
+    if (typeof item.description !== 'string') { throw new TypeError('Item description is not of type string.'); }
+
+    if (item.members === undefined) { throw new TypeError('Item members is undefined.'); }
+    if (typeof item.members !== 'boolean') { throw new TypeError('Item members is not of type boolean.'); }
+}
+
+/**
+ * Validate a Grand Exchange item to adhere to Item interface. Throws errors if not valid.
+ * @param item Item to be validated.
+ */
+export function validateItem(item: Item): void {
+    validateItemChild(item);
+    if (item.geCategory === undefined) { throw new TypeError('Item geCategory is undefined.'); }
+    if (item.geCategory.id === undefined) { throw new TypeError('Item geCategory.id is undefined.'); }
+    if (typeof item.geCategory.id !== 'number') { throw new TypeError('Item geCategory.id is not of type number.'); }
+    if (item.geCategory.name === undefined) { throw new TypeError('Item geCategory.name is undefined.'); }
+    if (typeof item.geCategory.name !== 'string') { throw new TypeError('Item geCategory.name is not of type string.'); }
 }

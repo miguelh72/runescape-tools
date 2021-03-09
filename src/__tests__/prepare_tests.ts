@@ -1,12 +1,10 @@
 import crawler from '../crawler';
+import grandexchange from '../grandexchange';
 import persistence from '../persistence';
-import { Skill } from '../types';
 import { warning } from '../utils';
 
-// Prepare for crawler.test.ts
-//crawler.getSkillWeeklyExpGainHtmlPages(Skill.runecrafting);
-
 (async () => {
+    // Prepare for crawler.test.ts
     let success = false;
     while (!success) {
         await crawler.getAllExpGainHtmlPages()
@@ -18,4 +16,7 @@ import { warning } from '../utils';
                 console.log(warning('\n' + err.message));
             });
     }
+
+    // Prepare for persistence.test.ts and grandexchange.tests.ts
+    await grandexchange.buildItemList();
 })();

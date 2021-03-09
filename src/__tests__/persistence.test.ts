@@ -1,6 +1,8 @@
+import fs from 'fs';
 import crawler from '../crawler';
+import grandexchange from '../grandexchange';
 import persistence from '../persistence';
-import { CRAWL_WEEK_START } from '../settings';
+import { CRAWL_WEEK_START, ITEM_DB_NAME } from '../settings';
 import { Skill, Timeframe } from '../types';
 import { expGainPageExample } from './results';
 
@@ -23,4 +25,15 @@ test('Save, verify existence, and retrieve exp gain page.', async () => {
 
 test('Verify data store integrity', async () => {
     expect(await persistence.verifyDatabaseIntegrity()).toBe(true);
+});
+
+test('Load and save item list', () => {
+    // Test assumes this was ran beforehand and simply confirms all itesm are loaded.
+    grandexchange.buildItemList();
+
+    const itemList = persistence.loadItemList();
+    fs.rmSync(ITEM_DB_NAME);
+    persistence.saveItemList(itemList);
+    const itemListReloaded = persistence.loadItemList();
+    expect(itemListReloaded).toEqual(itemList);
 });

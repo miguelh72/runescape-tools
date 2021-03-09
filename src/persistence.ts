@@ -1,8 +1,8 @@
 import fs from 'fs';
 import parse from 'node-html-parser';
-import { DATASTORE_FOLDER } from "./settings";
-import { HtmlPage, Skill } from './types';
-import { error, isValidUrl } from "./utils";
+import { DATASTORE_FOLDER, ITEM_DB_NAME } from "./settings";
+import { HtmlPage, ItemCategory, Skill } from './types';
+import { error, isValidUrl, validateItemChild } from "./utils";
 
 const NOT_ENOUGH_PLAYERS_FILENAME = 'not_enough_players.txt';
 
@@ -160,6 +160,49 @@ async function verifyDatabaseIntegrity() {
     return true;
 }
 
+/**
+ * Validate interfaces of an ItemCategory array. Throws errors if objects dont match interface.
+ * @param itemList ItemCategory[] to be validated.
+ */
+function validateItemCategoryArray(itemList: ItemCategory[]): void {
+    if (!(itemList instanceof Array)) { throw new Error('Item list was not an array.'); }
+    itemList.forEach(itemCategory => {
+        if (typeof itemCategory.id !== 'number' || typeof itemCategory.name !== 'string' || !(itemCategory.items instanceof Array)) {
+            throw new Error('ItemCategory did not match interface.');
+        }
+        itemCategory.items.forEach(item => {
+            try {
+                validateItemChild(item);
+                if ((item as any).geCategory !== undefined) { throw new Error('item implemented Item interface instead of ItemCategoryChild interface.'); }
+            } catch (err) {
+                throw new Error('ItemCategoryChild did not match interface.' + err.message);
+            }
+        });
+    });
+}
+
+/**
+ * Load available Grand Exchange item list from storage.
+ */
+function loadItemList(): ItemCategory[] {
+    if (fs.existsSync(ITEM_DB_NAME)) {
+        const itemList: ItemCategory[] = JSON.parse(fs.readFileSync(ITEM_DB_NAME, 'utf8'));
+        validateItemCategoryArray(itemList);
+        return itemList;
+    } else {
+        return [];
+    }
+}
+
+/**
+ * Store the item list to persistent storage.
+ * @param itemList ItemCategory[] the item list to be stored.
+ */
+function saveItemList(itemList: ItemCategory[]) {
+    validateItemCategoryArray(itemList);
+    fs.writeFileSync(ITEM_DB_NAME, JSON.stringify(itemList));
+}
+
 export default {
     isEndpointWithoutEnoughPlayers,
     saveEndpointWithoutEnoughPlayers,
@@ -167,4 +210,6 @@ export default {
     saveHtmlPage,
     getExpGainPageFromUrl,
     verifyDatabaseIntegrity,
+    loadItemList,
+    saveItemList
 };
