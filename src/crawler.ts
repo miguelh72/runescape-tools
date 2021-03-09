@@ -1,17 +1,21 @@
 import Nightmare from "nightmare";
 import parse from "node-html-parser";
 import { HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
-import { error, bold, isValidUrl, pause, printProgress, warning, WEEK_TIMELAPSE } from "./utils";
+import { error, bold, isValidUrl, pause, printProgress, warning, WEEK_TIMELAPSE, TabularFunction, ok } from "./utils";
 import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD } from "./settings";
 import persistence from "./persistence";
+import got, { OptionsOfJSONResponseBody } from "got";
+import tunnel from 'tunnel';
 
 const HIGHSCORE_ENDPOINT: string = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0';
 const HIGHSCORE_PAGENUMS_TO_SEARCH: number[] = [1, 51, 101, 201, 301, 401, 501, 1001, 2001, 3001];
+const PRICE_DATA_ENDPOINT: string = 'http://www.grandexchangecentral.com/include/gecgraphjson.php?jsid=';
 const MAX_RETRIES = 3; // number of retries per URL
 
 let _rateLimitPeriod: number = RATE_LIMIT_PERIOD;
 const _proxyErrorCounter: [number, string][] = Array.from({ length: PROXY_LIST.length }, (_, i) => [0, PROXY_LIST[i]]);
-const PROXY_DUMP_LIMIT = 5; // Remove proxies that fail more than this number of times.
+const PROXY_DUMP_LIMIT = 10; // Remove proxies that fail more than this number of times.
+// TODO change this to an error rate limit instead
 
 /**
  * Error thown when electron browser has an unknown error.
@@ -91,6 +95,7 @@ function printProxyErrorCount(top: number = PROXY_LIST.length): void {
     if (top !== undefined && (typeof top !== 'number' || top < 0 || top > PROXY_LIST.length)) { throw new TypeError('top must be a number greater than 0 and less than the number of proxies.'); }
 
     _proxyErrorCounter.sort((a, b) => b[0] - a[0]);
+    console.log(ok('\nProxy error report!'));
     console.log({ proxyErrorCount: _proxyErrorCounter.slice(0, top) });
 }
 
@@ -107,12 +112,12 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
     const crawlerOptions: IConstructorOptionsComplete = {
         show: false,
         loadImages: false,
-        webPreferences: { images: false }
+        webPreferences: { images: false },
     };
     if (useProxy) {
         crawlerOptions.switches = {
             'proxy-server': proxyGenerator.next().value,
-            'ignore-certificate-errors': true
+            'ignore-certificate-errors': true,
         };
     }
 
@@ -124,6 +129,7 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
         .then((response: string) => response) // TODO is this needed?
         .catch((err: Error) => {
             if (useProxy) {
+                // TODO Handle retry with recursive call
                 logProxyErrorEvent(crawlerOptions.switches['proxy-server']);
                 throw new ElectronUnknownError(`Error using proxy: ${crawlerOptions.switches['proxy-server']}. ${err.message}`);
             } else {
@@ -216,6 +222,7 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
             });
     }
     printProgress(100);
+    printProxyErrorCount();
     return htmlPages;
 }
 
@@ -236,6 +243,82 @@ async function getAllExpGainHtmlPages(): Promise<HtmlPage[][]> {
     return skillPages;
 }
 
+/**
+ * Obtain a year's worth of Grand Exchange price data for an item with daily granularity, total of 365 datapoints. Returns undefined if no data was available.
+ * @param itemID Item Grand Exchange id for which to obtain year price data for.
+ * @param proxy Proxy to be used. Defaults to using no proxy.
+ * @param numRetries Number of automatic retries. Defaults to MAX_RETRIES.
+ */
+async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<TabularFunction | undefined> {
+    if (typeof itemID !== 'number' || itemID < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
+    if (proxy !== undefined && (typeof proxy !== 'string' || proxy.split(':').length !== 2)) { throw new TypeError('proxy must be a string with host and post components.'); }
+    if (typeof numRetries !== 'number' || numRetries < 0) { throw new TypeError('numRetries must be a number greater than zero.'); }
+
+    const options: OptionsOfJSONResponseBody = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Referer': 'http://www.grandexchangecentral.com',
+        },
+        responseType: 'json',
+    }
+
+    if (proxy !== undefined) {
+        const proxyHost = proxy.split(':')[0];
+        const proxyPort = parseInt(proxy.split(':')[1]);
+        options.agent = {
+            http: tunnel.httpsOverHttp({
+                proxy: {
+                    host: proxyHost,
+                    port: proxyPort
+                },
+            }),
+            https: tunnel.httpsOverHttp({
+                proxy: {
+                    host: proxyHost,
+                    port: proxyPort
+                }
+            }) as any
+        }
+    }
+
+    async function getResponseRecursively(retries: number): Promise<[number, number][]> {
+        console.log('getResponseRecursively called retries = ', retries); // TODO rm
+
+        if (typeof retries !== 'number' || retries < 0) { throw new TypeError('retries must be a number greater than zero.'); }
+
+        return await got<[number, number][]>(PRICE_DATA_ENDPOINT + itemID, options)
+            .then(async response => {
+                if (response !== undefined) {
+                    return response.body;
+                } else {
+                    if (retries > 1) {
+                        return await getResponseRecursively(--retries);
+                    } else {
+                        throw new Error(error(`Error attempting to load price data ${(proxy === undefined) ? 'without a proxy.' : ('using proxy ' + proxy)}`));
+                    }
+                }
+            })
+            .then(result => pause(_rateLimitPeriod, result) as Promise<[number, number][]>)
+            .catch(async (err: Error) => {
+                if (retries > 1) {
+                    return await getResponseRecursively(--retries);
+                } else {
+                    //console.log(error(error.response.body));
+                    throw new Error(error(`Error attempting to load price data ${(proxy === undefined) ? 'without a proxy.' : ('using proxy ' + proxy)}\n${err.message}`));
+                }
+            });
+    }
+    const response: [number, number][] = await getResponseRecursively(numRetries);
+    // null if no data is available or bad request
+    if (response === null) { return; }
+    const timeSeries: TabularFunction = new TabularFunction();
+    response.forEach(([timestamp, price]) => {
+        timeSeries.addDatapoint(price, timestamp);
+    });
+    return timeSeries;
+}
+
 //export default { geSkillHighscoreUrlSet, proxyGenerator, loadHtmlPage, isValidExpGainPage, getSkillWeeklyExpGainHtmlPages, getAllExpGainHtmlPages };
 export default {
     loadHtmlPage,
@@ -243,6 +326,7 @@ export default {
     getAllExpGainHtmlPages,
     isValidExpGainPage,
     printProxyErrorCount,
+    getYearPriceData,
 
     /**
      * Do not use these functions outside of testing.
@@ -251,6 +335,6 @@ export default {
         geSkillHighscoreUrlSet,
         proxyGenerator,
         logProxyErrorEvent,
-        _proxyErrorCounter
+        _proxyErrorCounter,
     }
-};
+}

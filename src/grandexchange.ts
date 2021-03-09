@@ -1,10 +1,14 @@
 import { grandexchange as ge } from "runescape-api"
+import crawler from "./crawler";
 import persistence from './persistence';
 import { Item, ItemCategory } from "./types";
 import { error, isInTesting, printProgress } from './utils';
 
 let _itemList: ItemCategory[] = persistence.loadItemList();
 
+/**
+ * Using unofficial Runescape API build a list of all Grand Exchange tradeable items.
+ */
 async function buildItemList(): Promise<void> {
     if (!isInTesting()) { console.log('Building Grand Exchange item database.'); }
     const geCategories = await ge.getCategories();
@@ -45,6 +49,10 @@ async function buildItemList(): Promise<void> {
     printProgress(100);
 }
 
+/**
+ * Generate list of items whose name match a search term. Empty list is returned if no matches were found.
+ * @param term String search term to match against items name.
+ */
 function searchItemList(term: string): Item[] {
     if (typeof term !== 'string') { throw new TypeError('Search term must be a string with length greater than 0.'); }
 
@@ -63,4 +71,8 @@ function searchItemList(term: string): Item[] {
     return matchingItems;
 }
 
-export default { buildItemList, searchItemList };
+export default {
+    buildItemList,
+    searchItemList,
+    getYearPriceData: crawler.getYearPriceData
+};

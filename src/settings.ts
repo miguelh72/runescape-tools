@@ -1,23 +1,19 @@
+import { WEEK_TIMELAPSE } from "./utils";
+
 export const PROXY_LIST: string[] = [
-    '167.172.236.230:8080',
-    '165.227.120.65:8080',
-    '159.203.124.251:8080',
+    '37.235.97.16:3128',
+    '37.120.133.135:3128',
+    '84.17.51.209:3128',
     '138.199.31.79:3128',
-    '185.253.98.21:3128',
-    '185.253.98.20:3128',
-    '165.227.88.225:8080',
-    '188.166.213.127:8080',
-    '134.209.98.28:8080',
+    '138.199.30.139:3128',
     '34.92.50.186:3128',
-    '165.227.173.87:43891',
-    '176.113.73.102:3128',
-    '118.27.114.32:8080',
-    '104.248.35.123:8888',
-    '188.166.30.17:8888',
-    '176.113.73.101:3128',
-    '45.32.53.194:8080',
-    '129.232.134.107:3128',
-    '3.1.88.182:3128',
+    '51.158.180.179:8811',
+    '212.98.243.155:3128',
+    '138.199.30.141:3128',
+    '51.158.107.202:9999',
+    '37.120.133.135:3128',
+    '138.199.31.79:3128',
+    '34.92.50.186:3128',
     undefined
 ].reduce((uniques: string[], proxy: string | undefined): string[] => {
     if (!uniques.includes(proxy as string)) {
@@ -31,4 +27,13 @@ export const RATE_LIMIT_PERIOD: number = 1000; // ms
 export const DATASTORE_FOLDER: string = 'datastore';
 export const ITEM_DB_NAME = 'items.json';
 
-export const CRAWL_WEEK_START: number = 1599248196557; //1609529796557; // ms
+const BASE_WEEK_START: number = 1599248196557;
+export const CRAWL_WEEK_START: number = (() => {
+    // Calculate first week start 365 days ago as a multiple of BASE_WEEK_START so that filenames match in datastore
+    const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    let weekStart = BASE_WEEK_START;
+    while (weekStart - WEEK_TIMELAPSE >= oneYearAgo) {
+        weekStart -= WEEK_TIMELAPSE
+    }
+    return weekStart;
+})();
