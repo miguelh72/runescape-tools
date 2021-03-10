@@ -67,7 +67,8 @@ export interface ExpPage {
     url: string,
     exp: number,
     periodStart: number,
-    pageNum: number
+    pageNum: number,
+    hasData: boolean,
 }
 
 /**

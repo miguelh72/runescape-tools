@@ -70,8 +70,6 @@ const proxyGenerator: Generator<string> = (function* getProxyGenerator(): Genera
  * @param proxy Proxy to log error event for.
  */
 function logProxyErrorEvent(proxy: string): void {
-    validate.proxy(proxy);
-
     let indexErrorCounter = 0;
     for (const pxy of _proxyErrorCounter) {
         if (proxy === pxy[1]) {

@@ -5,8 +5,8 @@ test('Validate Skill', () => {
         expect(validate.skill(sk)).toBeUndefined();
     }
     expect(() => validate.skill(undefined as any)).toThrowError(TypeError);
-    expect(() => validate.skill(-1)).toThrowError(TypeError);
-    expect(() => validate.skill(29)).toThrowError(TypeError);
+    expect(() => validate.skill(-1)).toThrowError(RangeError);
+    expect(() => validate.skill(29)).toThrowError(RangeError);
 });
 
 test('Validate Timeframe', () => {
@@ -14,8 +14,8 @@ test('Validate Timeframe', () => {
     expect(validate.timeframe(1)).toBeUndefined();
     expect(validate.timeframe(2)).toBeUndefined();
     expect(() => validate.timeframe(undefined as any)).toThrowError(TypeError);
-    expect(() => validate.timeframe(-1)).toThrowError(TypeError);
-    expect(() => validate.timeframe(3)).toThrowError(TypeError);
+    expect(() => validate.timeframe(-1)).toThrowError(RangeError);
+    expect(() => validate.timeframe(3)).toThrowError(RangeError);
 });
 
 test('Validate URL', () => {
@@ -61,18 +61,24 @@ test('Validate HtmlPage', () => {
 test('Validate ExpPage', () => {
     const goodUrl = 'http://wwww.google.com';
     const badUrl = 'apple.txt';
-    expect(validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: 1 })).toBeUndefined();
+    expect(validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: 1, hasData: true })).toBeUndefined();
 
     expect(() => validate.expPage({} as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ exp: 100, periodStart: Date.now(), pageNum: 1 } as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ url: goodUrl, periodStart: Date.now(), pageNum: 1 } as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ url: goodUrl, exp: 100, pageNum: 1 } as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now() } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ exp: 100, periodStart: Date.now(), pageNum: 1, hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, periodStart: Date.now(), pageNum: 1, hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, pageNum: 1, hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: 1 } as any)).toThrowError(TypeError);
 
-    expect(() => validate.expPage({ url: badUrl, exp: 100, periodStart: Date.now(), pageNum: 1 } as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ url: goodUrl, exp: '100', periodStart: Date.now(), pageNum: 1 } as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now() + '', pageNum: 1 } as any)).toThrowError(TypeError);
-    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: '1' } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: badUrl, exp: 100, periodStart: Date.now(), pageNum: 1, hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: '100', periodStart: Date.now(), pageNum: 1, hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now() + '', pageNum: 1, hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: '1', hasData: true } as any)).toThrowError(TypeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: 1, hasData: 'true' } as any)).toThrowError(TypeError);
+
+    expect(() => validate.expPage({ url: goodUrl, exp: -1, periodStart: Date.now(), pageNum: 1, hasData: true } as any)).toThrowError(RangeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now() + 1, pageNum: 1, hasData: true } as any)).toThrowError(RangeError);
+    expect(() => validate.expPage({ url: goodUrl, exp: 100, periodStart: Date.now(), pageNum: -1, hasData: true } as any)).toThrowError(RangeError);
 });
 
 test('Validate ItemCategoryChild', () => {
@@ -88,6 +94,8 @@ test('Validate ItemCategoryChild', () => {
     expect(() => validate.itemCategoryChild({ id: 1, name: 1, description: 'an item', members: false } as any)).toThrowError(TypeError);
     expect(() => validate.itemCategoryChild({ id: 1, name: 'item', description: 1, members: false } as any)).toThrowError(TypeError);
     expect(() => validate.itemCategoryChild({ id: 1, name: 'item', description: 'an item', members: 'false', } as any)).toThrowError(TypeError);
+
+    expect(() => validate.itemCategoryChild({ id: -1, name: 'item', description: 'an item', members: false } as any)).toThrowError(RangeError);
 });
 
 
@@ -109,6 +117,9 @@ test('Validate Item', () => {
     expect(() => validate.item({ id: 1, name: 'item', description: 'an item', members: false, geCategory: { id: '1', name: 'category' } } as any)).toThrowError(TypeError);
     expect(() => validate.item({ id: 1, name: 'item', description: 'an item', members: false, geCategory: { id: 1, name: 1 } } as any)).toThrowError(TypeError);
     expect(() => validate.item({ id: 1, name: 'item', description: 'an item', members: false, geCategory: [] } as any)).toThrowError(TypeError);
+
+    expect(() => validate.item({ id: -1, name: 'item', description: 'an item', members: false, geCategory: { id: 1, name: 'category' } } as any)).toThrowError(RangeError);
+    expect(() => validate.item({ id: 1, name: 'item', description: 'an item', members: false, geCategory: { id: -1, name: 'category' } } as any)).toThrowError(RangeError);
 });
 
 test('Validate ItemCategory', () => {

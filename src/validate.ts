@@ -7,7 +7,7 @@ import { ExpPage, HtmlPage, Item, ItemCategory, ItemCategoryChild, Skill, Timefr
  */
 function skill(skill: Skill): void {
     if (typeof skill !== 'number') { throw new TypeError('Skill should be of type number. Make sure you are using Skill enum.'); }
-    if (skill < 0 || skill > 28) { throw new TypeError('Skill should be greater than or equal to 0 and less than or equal to 28. Make sure you are using Skill enum.'); }
+    if (skill < 0 || skill > 28) { throw new RangeError('Skill should be greater than or equal to 0 and less than or equal to 28. Make sure you are using Skill enum.'); }
 }
 
 /**
@@ -17,7 +17,7 @@ function skill(skill: Skill): void {
  */
 function timeframe(timeframe: Timeframe): void {
     if (typeof timeframe !== 'number') { throw new TypeError('Timeframe should be of type number. Make sure you are using Timeframe enum.'); }
-    if (timeframe < 0 || timeframe > 2) { throw new TypeError('Timeframe should be greater than or equal to 0 and less than or equal to 2. Make sure you are using Timeframe enum.'); }
+    if (timeframe < 0 || timeframe > 2) { throw new RangeError('Timeframe should be greater than or equal to 0 and less than or equal to 2. Make sure you are using Timeframe enum.'); }
 }
 
 /**
@@ -58,7 +58,8 @@ function expPage(expPage: ExpPage): void {
     if (typeof expPage.url !== 'string'
         || typeof expPage.exp !== 'number'
         || typeof expPage.periodStart !== 'number'
-        || typeof expPage.pageNum !== 'number') {
+        || typeof expPage.pageNum !== 'number'
+        || typeof expPage.hasData !== 'boolean') {
         throw new TypeError('ExpPage did not match interface structure');
     }
     try {
@@ -66,6 +67,9 @@ function expPage(expPage: ExpPage): void {
     } catch (_) {
         throw new TypeError('ExpPage url is not in a valid format.');
     }
+    if (expPage.exp < 0) { throw new RangeError('ExpPage.exp must be greater than or equal to zero.'); }
+    if (expPage.periodStart < 0 || expPage.periodStart > Date.now()) { throw new RangeError('ExpPage.periodStart must be greater than or equal to zero and not in the future.'); }
+    if (expPage.pageNum < 0) { throw new RangeError('ExpPage.pageNum must be greater than or equal to zero.'); }
 }
 
 /**
@@ -80,6 +84,7 @@ function itemCategoryChild(itemCategoryChild: ItemCategoryChild): void {
         || typeof itemCategoryChild.members !== 'boolean') {
         throw new TypeError('ItemCategoryChild did not match interface structure.');
     }
+    if (itemCategoryChild.id < 0) { throw new RangeError('ItemCategoryChild.id must be greater than or equal to zero.'); }
 }
 
 /**
@@ -90,12 +95,17 @@ function itemCategoryChild(itemCategoryChild: ItemCategoryChild): void {
 function item(item: Item): void {
     try {
         itemCategoryChild(item);
-    } catch (_) {
-        throw new TypeError('Item did not match interface structure.');
+    } catch (err) {
+        if (err instanceof TypeError) {
+            throw new TypeError('Item did not match interface structure.');
+        } else {
+            throw new RangeError('Item.id must be greater than or equal to zero.')
+        }
     }
     if (item.geCategory === undefined || typeof item.geCategory.id !== 'number' || typeof item.geCategory.name !== 'string') {
         throw new TypeError('Item geCategory did not match interface structure.');
     }
+    if (item.geCategory.id < 0) { throw new RangeError('Item.geCategory.id must be greater than or equal to zero.'); }
 }
 
 /**

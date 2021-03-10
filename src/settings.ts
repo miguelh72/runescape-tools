@@ -13,8 +13,7 @@ export const PROXY_LIST: string[] = [
     '138.199.31.79:3128',
     '121.125.54.228:3128',
     '138.199.30.141:3128',
-    '3.1.88.182:3128',
-    undefined
+    '3.1.88.182:3128'
 ].reduce((uniques: string[], proxy: string | undefined): string[] => {
     if (!uniques.includes(proxy as string)) {
         uniques.push(proxy as string)
