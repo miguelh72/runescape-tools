@@ -11,7 +11,7 @@
     "runescape"
   ],
   "author": "Miguel Hernandez <miguelh72@outlook.com>",
-  "license": "Private",
+  "license": "GNU General Public License v3.0",
   "devDependencies": {
     "@types/crawler": "^1.2.0",
     "@types/got": "^9.6.11",
