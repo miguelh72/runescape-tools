@@ -1,7 +1,7 @@
 {
   "name": "runescape-tools",
   "version": "0.1.0",
-  "description": "Tools used to analyze Runescape API for advantages in-game.",
+  "description": "Tools used to analyze available Runescape data for advantages in-game.",
   "main": "index.js",
   "scripts": {
     "start": "tsc -w",
