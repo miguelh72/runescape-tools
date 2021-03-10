@@ -1,8 +1,8 @@
 import { grandexchange as ge } from "runescape-api"
-import crawler from "./crawler";
-import persistence from './persistence';
 import { Item, ItemCategory } from "./types";
 import { bold, error, isInTesting, printProgress } from './utils';
+import crawler from "./crawler";
+import persistence from './persistence';
 
 let _itemList: ItemCategory[] = persistence.fetchItemList();
 

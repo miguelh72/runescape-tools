@@ -1,5 +1,6 @@
 import readline from 'readline';
 import chalk, { Chalk } from "chalk";
+import { plot } from 'nodeplotlib';
 import { ExpPage, HtmlPage } from './types';
 import validate from './validate';
 import crawler from './crawler';
@@ -114,6 +115,28 @@ export class TabularFunction {
 
         const integrationSection = this.slice(from, to);
         return integrate(integrationSection.f, integrationSection.x);
+    }
+
+    /**
+     * Launch a browser window with a scatter plot of the TabularFunction.
+     * @param title Optional graph title.
+     * @param xLegend Optional x-axis legend.
+     * @param yLegend Optional y-axis legend.
+     */
+    plot(options: { title?: string, xLegend?: string, yLegend?: string } = {}): void {
+        if (options.title !== undefined && typeof options.title !== 'string') { throw new TypeError('Graph title must be a string.'); }
+        if (options.xLegend !== undefined && typeof options.xLegend !== 'string') { throw new TypeError('Graph x-legend must be a string.'); }
+        if (options.yLegend !== undefined && typeof options.yLegend !== 'string') { throw new TypeError('Graph y-legend must be a string.'); }
+
+        plot([{
+            x: this.#x,
+            y: this.#f,
+            mode: 'markers'
+        }], {
+            title: { text: options?.title, font: { size: 20 } },
+            xaxis: { title: options?.xLegend },
+            yaxis: { title: options?.yLegend }
+        })
     }
 
     toString(): string {

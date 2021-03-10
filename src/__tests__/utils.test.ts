@@ -80,6 +80,12 @@ test('Using tabular functions', () => {
         fn2.addDatapoint(i * 2, i);
     }
     expect(fn2).toEqual(fn);
+    fn2.addDatapoint(99, -1);
+    expect(fn2.x[0]).toEqual(-1);
+    expect(fn2.f[0]).toEqual(99);
+    fn2.addDatapoint(77, 99);
+    expect(fn2.x[fn2.length - 1]).toEqual(99);
+    expect(fn2.f[fn2.length - 1]).toEqual(77);
 
     fn.addDatapoint(7, 3.5);
     expect(fn.length).toEqual(length + 1);
@@ -150,3 +156,11 @@ test('Convert HtmlPage to ExpPage', () => {
     // Case page is not experience page
     expect(() => expPage = getExpPage(internetingishardPage)).toThrowError();
 });
+
+test('\nVISUAL INSPECTION REQUIRED\nPlot linear TabularFunction', () => {
+    let length = 11;
+    let x = Array.from({ length }, (_, i) => 2 * i);
+    let f = Array.from({ length }, (_, i) => i);
+    let fn = new TabularFunction(f, x);
+    fn.plot({ title: 'Linear function with 0.5 slope', xLegend: 'x-axis legend', yLegend: 'y-axis legend' });
+})
