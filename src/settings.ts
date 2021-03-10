@@ -24,7 +24,6 @@ export const PROXY_LIST: string[] = [
 export const RATE_LIMIT_PERIOD: number = 1000; // ms
 
 export const DATASTORE_FOLDER: string = 'datastore';
-export const ITEM_DB_NAME = 'items.json';
 
 const BASE_WEEK_START: number = 1599248196557;
 export const CRAWL_WEEK_START: number = (() => {

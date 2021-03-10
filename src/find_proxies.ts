@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { IConstructorOptionsComplete } from './types';
 import crawler from './crawler';
 import validate from './validate';
+import { getExpPage } from './utils';
 
 const url = 'https://secure.runescape.com/m=hiscore/ranking?category_type=0&table=0&time_filter=1&page=1';
 const NUM_CHECKS = 2;
@@ -36,7 +37,7 @@ async function getWorkingProxyList(): Promise<string[]> {
             .evaluate(() => document.documentElement.outerHTML)
             .end()
             .then((html: string) => {
-                if (crawler.isValidExpGainPage({ url, html })) {
+                if (getExpPage({ url, html }).hasData) {
                     workingProxyList.push(proxy);
                 }
             })
@@ -61,7 +62,7 @@ async function getWorkingProxyList(): Promise<string[]> {
                 .evaluate(() => document.documentElement.outerHTML)
                 .end()
                 .then((html: string) => {
-                    if (crawler.isValidExpGainPage({ url, html })) {
+                    if (getExpPage({ url, html }).hasData) {
                         checkedWorkingProxyList.push(proxy);
                     }
                 })

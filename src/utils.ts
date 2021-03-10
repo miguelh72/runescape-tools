@@ -1,5 +1,9 @@
 import readline from 'readline';
 import chalk, { Chalk } from "chalk";
+import { ExpPage, HtmlPage } from './types';
+import validate from './validate';
+import crawler from './crawler';
+import parse from 'node-html-parser';
 
 const NUM_PROGRESS_BARS: number = 70;
 
@@ -187,4 +191,49 @@ export function integrate(f: number[], x?: number[], fo?: number): number {
         result += 0.5 * (f[step + 1] + f[step]) * (x[step + 1] - x[step]);
     }
     return result;
+}
+
+function getTimestampFromUrl(url: string): number {
+    let dateStartIndex = url.indexOf('&date=');
+    if (dateStartIndex === -1) { throw new Error('URL does not contain date parameter'); }
+    dateStartIndex += 6;
+    const dateEndIndex = url.indexOf('&page=');
+    if (dateEndIndex === -1) { throw new Error('URL does not contain page parameter'); }
+    return parseInt(url.slice(dateStartIndex, dateEndIndex));
+}
+function getPageNumberFromUrl(url: string): number {
+    let pageNumStartIndex = url.indexOf('&page=');
+    if (pageNumStartIndex === -1) { throw new Error('URL does not contain page parameter'); }
+    pageNumStartIndex += 6;
+    return parseInt(url.slice(pageNumStartIndex, url.length));
+}
+function doesExpPageHaveData(page: HtmlPage): boolean {
+    if (page.html.includes('Sorry, there are currently no players to display')) {
+        return false;
+    } else if (parse(page.html).querySelector('div.tableWrap') !== null) {
+        return true
+    } else {
+        throw new Error("Page has highscore URL but it does not contain neither data nor a not enough players response. Perhaps it's a critical server error page.");
+    }
+}
+function getPageTotalExp(page: HtmlPage): number {
+    return parse(page.html)
+        .querySelectorAll('div.tableWrap table')[1]
+        .querySelectorAll('tr')
+        .map((tr) => parseInt(tr.querySelectorAll('td')[2].text.trim().replace(/[,]/g, '')))
+        .reduce((sum, exp) => sum + exp);
+}
+/**
+ * Convert an HtmlPage to an ExpPage. Throws error if HtmlPage is not from a highscore experience page.
+ * @param htmlPage HtmlPage of a highscore experience page.
+ */
+export function getExpPage(htmlPage: HtmlPage): ExpPage {
+    validate.htmlPage(htmlPage);
+    if (!htmlPage.url.includes(crawler.HIGHSCORE_ENDPOINT)) { throw new Error('URL is not for a highscore experience page.'); }
+
+    const periodStart: number = getTimestampFromUrl(htmlPage.url);
+    const pageNum: number = getPageNumberFromUrl(htmlPage.url);
+    const hasData: boolean = doesExpPageHaveData(htmlPage);
+    const exp: number = (hasData) ? getPageTotalExp(htmlPage) : 0;
+    return { url: htmlPage.url, exp, periodStart, pageNum, hasData };
 }

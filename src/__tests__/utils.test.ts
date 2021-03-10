@@ -1,4 +1,5 @@
-import { integrate, isInTesting, pause, TabularFunction } from "../utils";
+import { getExpPage, integrate, isInTesting, pause, TabularFunction } from "../utils";
+import { expGainPageExample, internetingishardPage, notEnoughPlayersPageExample } from "./results";
 
 test('Know program is in test mode', () => {
     expect(isInTesting()).toBe(true);
@@ -135,4 +136,17 @@ test('Using tabular functions', () => {
     expect(fn.slice(from, to).x).toEqual(x.slice(from, to));
     expect(fn.integrate()).toBe((length - 1) * (length - 1));
     expect(fn.integrate(from, to)).toBe(0.5 * (f[to - 1] + f[from]) * (x[to - 1] - x[from]));
+});
+
+test('Convert HtmlPage to ExpPage', () => {
+    // Case page doesnt have data
+    let expPage = getExpPage(notEnoughPlayersPageExample);
+    expect(expPage).toEqual({ url: notEnoughPlayersPageExample.url, exp: 0, periodStart: 1610739396557, pageNum: 3001, hasData: false })
+
+    // Case page has data
+    expPage = getExpPage(expGainPageExample);
+    expect(expPage).toEqual({ url: expGainPageExample.url, exp: 83110129, periodStart: 1610739396557, pageNum: 3001, hasData: true })
+
+    // Case page is not experience page
+    expect(() => expPage = getExpPage(internetingishardPage)).toThrowError();
 });

@@ -1,8 +1,7 @@
-import parse from "node-html-parser";
-import crawler from "./crawler";
-import { HtmlPage, Skill } from "./types";
-import { integrate, TabularFunction, WEEK_TIMELAPSE } from "./utils";
+import { ExpPage, Skill } from "./types";
+import { integrate, TabularFunction } from "./utils";
 import validate from "./validate";
+import crawler from "./crawler";
 
 const DOUBLE_EXP_EVENTS: [number, number][] = [ // TODO load this from wiki
     ['19 February 2021 UTC-12:00', '1 March 2021 UTC-12:00'],
@@ -15,37 +14,10 @@ const DOUBLE_EXP_EVENTS: [number, number][] = [ // TODO load this from wiki
     ['22 February 2019 UTC-12:00', '25 February 2019 UTC-12:00'],
 ].map((event) => [new Date(event[0]).getTime(), new Date(event[1]).getTime()]);
 
-function getTimestampFromUrl(url: string): number {
-    validate.url(url);
-
-    let dateStartIndex = url.indexOf('&date=');
-    if (dateStartIndex === -1) { throw new Error('URL does not contain date parameter'); }
-    dateStartIndex += 6;
-    const dateEndIndex = url.indexOf('&page=');
-    if (dateEndIndex === -1) { throw new Error('URL does not contain page parameter'); }
-    return parseInt(url.slice(dateStartIndex, dateEndIndex));
-}
-
-function getPageNumberFromUrl(url: string): number {
-    validate.url(url);
-
-    let pageNumStartIndex = url.indexOf('&page=');
-    if (pageNumStartIndex === -1) { throw new Error('URL does not contain page parameter'); }
-    pageNumStartIndex += 6;
-    return parseInt(url.slice(pageNumStartIndex, url.length));
-}
-
-function getPageTotalExp(page: HtmlPage): number {
-    validate.htmlPage(page);
-    if (!crawler.isValidExpGainPage(page)) { throw new TypeError('Page must be a valid highscore experience gain page.'); }
-
-    return parse(page.html)
-        .querySelectorAll('div.tableWrap table')[1]
-        .querySelectorAll('tr')
-        .map((tr) => parseInt(tr.querySelectorAll('td')[2].text.trim().replace(/[,]/g, '')))
-        .reduce((sum, exp) => sum + exp);
-}
-
+/**
+ * Determine if a week was a double experience gain week.
+ * @param weekStart Start of week.
+ */
 function isDoubleExpWeek(weekStart: number): boolean {
     if (typeof weekStart !== 'number') { throw new TypeError('weekStart must be of type number.'); }
 
@@ -54,33 +26,35 @@ function isDoubleExpWeek(weekStart: number): boolean {
     }, false);
 }
 
+/**
+ * Get a TabularFunction timeseries of weekly total exp gain for a Skill from CRAWL_WEEK_START to last finished week.
+ * @param skill Skill for which to calculate weekly total exp gain timeseries.
+ */
 async function getWeeklyExpGains(skill: Skill): Promise<TabularFunction> {
     validate.skill(skill);
 
-    const htmlPages: HtmlPage[] = await crawler.getSkillWeeklyExpGainHtmlPages(skill);
-    const timeStampGroupedPages: { [key: number]: HtmlPage[] } = htmlPages.reduce((grouped: { [key: number]: HtmlPage[] }, page: HtmlPage) => {
-        const timestamp = getTimestampFromUrl(page.url);
-        if (grouped[timestamp] === undefined) { grouped[timestamp] = []; }
-        grouped[timestamp].push(page);
-        return grouped;
+    const expPages: ExpPage[] = await crawler.getWeeklyExpPages(skill);
+    const periodStartGroupedPages: { [key: number]: ExpPage[] } = expPages.reduce((groupedPages: { [key: number]: ExpPage[] }, expPage: ExpPage) => {
+        if (groupedPages[expPage.periodStart] === undefined) { groupedPages[expPage.periodStart] = []; }
+        groupedPages[expPage.periodStart].push(expPage);
+        return groupedPages;
     }, {});
 
     const expTimeSeries = new TabularFunction();
-    for (const timeStampStr in timeStampGroupedPages) {
-        const pageNumSeries: { pageNums: number[], totalPageExps: number[] } = timeStampGroupedPages[timeStampStr].reduce(
-            (pageNumSeries: { pageNums: number[], totalPageExps: number[] }, page: HtmlPage) => {
-                pageNumSeries.pageNums.push(getPageNumberFromUrl(page.url));
-                pageNumSeries.totalPageExps.push(getPageTotalExp(page));
+    for (const periodStartStr in periodStartGroupedPages) {
+        const pageNumSeries: { pageNums: number[], exps: number[] } = periodStartGroupedPages[periodStartStr].reduce(
+            (pageNumSeries: { pageNums: number[], exps: number[] }, expPage: ExpPage) => {
+                pageNumSeries.pageNums.push(expPage.pageNum);
+                pageNumSeries.exps.push(expPage.exp);
                 return pageNumSeries;
-            }, { pageNums: [], totalPageExps: [] }
+            }, { pageNums: [], exps: [] }
         );
-        const timeStamp = parseInt(timeStampStr);
-        let estTotalWeekExp = integrate(pageNumSeries.totalPageExps, pageNumSeries.pageNums, pageNumSeries.totalPageExps[0]);
-        if (isDoubleExpWeek(timeStamp)) {
-            estTotalWeekExp /= 2;
+        const periodStart = parseInt(periodStartStr);
+        let estimatedTotalWeekExp = integrate(pageNumSeries.exps, pageNumSeries.pageNums, pageNumSeries.exps[0]);
+        if (isDoubleExpWeek(periodStart)) {
+            estimatedTotalWeekExp /= 2;
         }
-
-        expTimeSeries.addDatapoint(estTotalWeekExp, timeStamp);
+        expTimeSeries.addDatapoint(estimatedTotalWeekExp, periodStart);
     }
     return expTimeSeries;
 }
@@ -92,9 +66,6 @@ export default {
      * Do not use these functions outside of testing.
      */
     __tests__: {
-        getTimestampFromUrl,
-        getPageNumberFromUrl,
-        getPageTotalExp,
         DOUBLE_EXP_EVENTS,
         isDoubleExpWeek,
     }

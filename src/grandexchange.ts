@@ -2,15 +2,15 @@ import { grandexchange as ge } from "runescape-api"
 import crawler from "./crawler";
 import persistence from './persistence';
 import { Item, ItemCategory } from "./types";
-import { error, isInTesting, printProgress } from './utils';
+import { bold, error, isInTesting, printProgress } from './utils';
 
-let _itemList: ItemCategory[] = persistence.loadItemList();
+let _itemList: ItemCategory[] = persistence.fetchItemList();
 
 /**
  * Using unofficial Runescape API build a list of all Grand Exchange tradeable items.
  */
 async function buildItemList(): Promise<void> {
-    if (!isInTesting()) { console.log('Building Grand Exchange item database.'); }
+    if (!isInTesting()) { console.log(`Building Grand Exchange ${bold('item database')}.`); }
     const geCategories = await ge.getCategories();
 
     const allItems: ItemCategory[] = [];

@@ -1,6 +1,6 @@
 import { HtmlPage } from "../types";
 
-export const internetingishard: HtmlPage = {
+export const internetingishardPage: HtmlPage = {
   url: 'https://www.internetingishard.com/html-and-css/',
   html: `<html lang="en"><head>
     <title>HTML &amp; CSS Is Hard | A friendly web development tutorial</title>
@@ -431,7 +431,8 @@ export const internetingishard: HtmlPage = {
   
   
   
-  </body></html>`};
+  </body></html>`
+};
 
 export const expGainPageExample: HtmlPage = {
   url: 'http://secure.runescape.com/m=hiscore/ranking?category_type=0&table=0&time_filter=1&date=1610739396557&page=3001',
@@ -1458,3 +1459,504 @@ export const expGainPageExample: HtmlPage = {
   </body>
   </html>`
 };
+
+export const notEnoughPlayersPageExample: HtmlPage = {
+  url: 'http://secure.runescape.com/m=hiscore/ranking?category_type=0&table=21&time_filter=1&date=1610739396557&page=3001',
+  html: `<!doctype html>
+  <!--[if lt IE 7]><html class="no-js lt-ie10 lt-ie9 lt-ie8 lt-ie7" lang="en"><![endif]-->
+  <!--[if (IE 7)&!(IEMobile)]><html class="no-js lt-ie10 lt-ie9 lt-ie8" lang="en"><![endif]-->
+  <!--[if (IE 8)&!(IEMobile)]><html class="no-js lt-ie10 lt-ie9" lang="en"><![endif]-->
+  <!--[if (IE 9)&!(IEMobile)]><html class="no-js lt-ie10" lang="en"><![endif]-->
+  <!--[if gt IE 9]><!--><!-- x --> <html class="no-js" lang="en"> <!--<![endif]-->
+  <head><script src="/Criciousand-meth-shake-Exit-be-till-in-ches-Shad" async></script>
+  <title>Runecrafting - Player Ranking - RuneScape</title>
+  <meta name="description" content="See the top RuneScape players of the week and how your own characters rank for specific skills and activities."/>
+  <meta name="author" content="Jagex"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="dns-prefetch" href="//www.google-analytics.com" />
+  <link rel="dns-prefetch" href="//ajax.googleapis.com" />
+  <link rel="dns-prefetch" href="//connect.facebook.net" />
+  <link href="https://www.runescape.com/css/c/fonts-101.css" rel="stylesheet" type="text/css" media="all" />
+  <script src="https://www.runescape.com/js/c/rs3/modernizr_3_0_0_min-100.js"></script>
+  <link href="https://www.runescape.com/css/c/components-135.css" rel="stylesheet" />
+  <link href="https://www.runescape.com/css/c/pagesal-135.css" rel="stylesheet" />
+  <link href="https://www.runescape.com/css/c/pagesmz-135.css" rel="stylesheet" />
+  <link rel="shortcut icon" href="https://www.runescape.com/img/global/favicon.ico?1">
+  <link rel="apple-touch-icon" href="https://www.runescape.com/img/global/mobile.png?1">
+  <meta property="og:title" content="Runecrafting - Player Ranking - RuneScape" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="RuneScape" />
+  <meta property="og:image" content="https://www.runescape.com/img/microsite/social-share-fb.jpg" />
+  <meta property="og:url" content="https://www.runescape.com" />
+  <meta property="og:description" content="See the top RuneScape players of the week and how your own characters rank for specific skills and activities." />
+  <meta name="twitter:domain" content="RuneScape.com">
+  <meta name="twitter:url" content="https://www.runescape.com">
+  <meta name="twitter:title" content="Runecrafting - Player Ranking - RuneScape">
+  <meta name="twitter:description" content="See the top RuneScape players of the week and how your own characters rank for specific skills and activities.">
+  <meta name="twitter:image:src" content="https://www.runescape.com/img/microsite/social-share.jpg">
+  <meta name="twitter:site" content="@RuneScape">
+  <meta name="google-site-verification" content="pUwl5KYHKSZ6tbbgsR2wYNv1kbVmsYral3iFmijHTWM" />
+  
+  <link rel="prev" href="https://secure.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&page=3004" /><link rel="next" href="https://secure.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&page=3006" />
+  <link rel="canonical" href="https://secure.runescape.com/m=hiscore/ranking" />
+  
+  <meta property="fb:app_id" content="174823375888281" />
+  </head>
+  <body id="hiscore" class="hiscore en" itemscope itemtype="http://schema.org/WebPage">
+  <div class="stickyWrap">
+  
+  <header class="c-responsive-header">
+  <div class="c-responsive-header__grey-out" id="nav-grey-out"></div>
+  <div class="c-responsive-header__sub">
+  <div class="c-responsive-header__sub-inner">
+  <nav class="c-responsive-header__sub-nav">
+  <span class="c-responsive-header__sub-option">
+  <span id="playerCount" class="c-responsive-header__player-count" data-test="header-sub-online-count">0</span>
+  <span>Online</span>
+  </span>
+  <a class="c-responsive-header__sub-link" href="https://oldschool.runescape.com/" data-test="header-sub-oldschool">Old School</a>
+  <a class="c-responsive-header__sub-link" href="https://payments.jagex.com/#/store/runescape/membership" data-test="header-sub-subscribe">Subscribe</a>
+  <a class="c-responsive-header__sub-link" href="https://www.runescape.com/account_settings" data-test="header-sub-account">Account</a>
+  <a class="c-responsive-header__sub-link" href="https://support.runescape.com" target="_blank" data-test="header-sub-support">Support</a>
+  </nav>
+  </div>
+  </div>
+  <div class="c-responsive-header__main">
+  <div class="c-responsive-header__inner">
+  <a class="c-responsive-header__logo" href="https://www.runescape.com/" data-test="header-main-logo">
+  <img class="c-responsive-header__logo-image" src="https://www.runescape.com/img/rs3/global/header_logo.png" title="RuneScape" alt="RuneScape logo" />
+  </a>
+  <nav class="c-responsive-header__nav" id="responsive-header-nav">
+  <div class="c-responsive-header__group">
+  <a class="c-responsive-header__top c-responsive-header__top--type-parent" data-js-responsive-header-top data-test="header-main-game-guide" href="https://www.runescape.com/game-info">Game Guide</a>
+  <div class="c-responsive-header__children" data-js-responsive-header-children>
+  <a class="c-responsive-header__option c-responsive-header__option--type-mobile" data-test="header-main-game-info" href="https://www.runescape.com/game-info">Game Info</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-external" data-test="header-main-wiki" href="https://runescape.wiki" target="_blank" rel="noopener">Wiki</a>
+  <a class="c-responsive-header__option" data-test="header-main-beginners-guide" href="https://www.runescape.com/game-guide/beginners-guide">Beginners' Guide</a>
+  <a class="c-responsive-header__option" data-test="header-main-skills" href="https://www.runescape.com/game-guide/skills">Skills</a>
+  <a class="c-responsive-header__option" data-test="header-main-combat" href="https://www.runescape.com/game-guide/combat">Combat</a>
+  </div>
+  </div>
+  <div class="c-responsive-header__group">
+  <a class="c-responsive-header__top" data-js-responsive-header-top data-test="header-main-news" href="https://secure.runescape.com/m=news/">News</a>
+  </div>
+  <div class="c-responsive-header__group">
+  <a class="c-responsive-header__top c-responsive-header__top--type-parent" data-js-responsive-header-top data-test="header-main-community" href="https://www.runescape.com/community">Community</a>
+  <div class="c-responsive-header__children" data-js-responsive-header-children>
+  <a class="c-responsive-header__option c-responsive-header__option--type-mobile" data-test="header-main-community-home" href="https://www.runescape.com/community">Home</a>
+  <a class="c-responsive-header__option" data-test="header-main-forums" href="https://secure.runescape.com/m=forum/forums">Forums</a>
+  <a class="c-responsive-header__option" data-test="header-main-hiscores" href="https://secure.runescape.com/m=hiscore/">HiScores</a>
+  <a class="c-responsive-header__option" data-test="header-main-runemetrics" href="https://apps.runescape.com/runemetrics/app/">RuneMetrics</a>
+  <a class="c-responsive-header__option" data-test="header-main-grand-exchange" href="https://secure.runescape.com/m=itemdb_rs/">Grand Exchange</a>
+  <a class="c-responsive-header__option" data-test="header-main-clans" href="http://services.runescape.com/m=clan-home/">Clans</a>
+  <a class="c-responsive-header__option" data-test="header-main-power" href="https://secure.runescape.com/m=poll/">Player Power</a>
+  <a class="c-responsive-header__option" data-test="header-main-recruit-a-friend" href="http://services.runescape.com/m=friend-referral/">Recruit a Friend</a>
+  </div>
+  </div>
+  <div class="c-responsive-header__group">
+  <a class="c-responsive-header__top c-responsive-header__top--type-parent" data-js-responsive-header-top data-test="header-main-shop" href="https://www.runescape.com/members_benefits">Shop</a>
+  <div class="c-responsive-header__children" data-js-responsive-header-children>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-membership" data-test="header-main-membership" href="https://www.runescape.com/members_benefits">Membership</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-treasure-hunter" data-test="header-main-treasure" href="https://www.runescape.com/treasure-hunter">Treasure Hunter</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-bonds" data-test="header-main-bonds" href="https://www.runescape.com/bonds">Bonds</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-solomons" data-test="header-main-solomon" href="https://www.runescape.com/solomons-store">Solomon's Store</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-runemetrics" data-test="header-main-runemetrics-pro" href="https://www.runescape.com/runemetrics">RuneMetrics Pro</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-loyalty" data-test="header-main-loyalty" href="https://www.runescape.com/loyalty">Loyalty Programme</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-cards" data-test="header-main-pre-paid-cards" href="https://www.runescape.com/store_locator">Pre-paid Cards</a>
+  <a class="c-responsive-header__option c-responsive-header__option--type-icon c-responsive-header__option--type-external c-responsive-header__option--type-merchandise" data-test="header-main-merchandise" href="http://runescape.backstreetmerch.com" target="_blank">Merchandise</a>
+  </div>
+  </div>
+  <div class="c-responsive-header__group c-responsive-header__group--type-gap">
+  <a class="c-responsive-header__top c-responsive-header__top--type-download" data-js-responsive-header-top data-test="header-main-download" href="https://www.runescape.com/download">Download</a>
+  </div>
+  <div class="c-responsive-header__group">
+  <a class="c-responsive-header__top" data-test="header-main-login" href="https://secure.runescape.com/m=weblogin/loginform?theme=runescape&amp;mod=hiscore&amp;ssl=1&amp;dest=ranking%3Fcategory_type%3D0%26table%3D21%26time_filter%3D1%26date%3D1610739396557%26page%3D3001">Log in</a>
+  </div>
+  <div class="c-responsive-header__group c-responsive-header__group--mobile-only">
+  <a class="c-responsive-header__top" data-js-responsive-header-top data-test="header-main-account-settings" href="https://www.runescape.com/account_settings">My Account</a>
+  </div>
+  <div class="c-responsive-header__group">
+  <a id="subscribe" class="c-responsive-header__top" data-test="header-main-subscribe" href="https://payments.jagex.com/#/store/runescape/membership">Subscribe</a>
+  </div>
+  <div class="c-responsive-header__group">
+  <a id="try" class="c-responsive-header__top c-responsive-header__top--type-wide c-responsive-header__top--type-primary" data-test="header-main-try-free" href="https://secure.runescape.com/m=account-creation/create_account?theme=runescape">Try Free</a>
+  </div>
+  <div class="c-responsive-header__group c-responsive-header__group--mobile-only">
+  <a class="c-responsive-header__top c-responsive-header__top--type-external" data-js-responsive-header-top data-test="header-main-support" href="https://support.runescape.com">Support</a>
+  <a class="c-responsive-header__top c-responsive-header__top--type-external" data-js-responsive-header-top data-test="header-main-oldschool" href="https://oldschool.runescape.com/">Old School</a>
+  </div>
+  </nav>
+  <a class="c-responsive-header__hamburger" id="responsive-header-hamburger" href="#responsive-header-nav" aria-label="Open the menu" data-test="header-main-menu">Menu</a>
+  </div>
+  </div>
+  </header>
+  
+  <div class="banner">
+  <div class="inner">
+  <img src="https://www.runescape.com/img/rs3/banners/generic.jpg" alt="RuneScape LandScape" />
+  </div>
+  </div>
+  <div class="contents">
+  <div class="main">
+  
+  <h1 class="title "><span>HiScores</span></h1>
+  <ul class="breadcrumb" itemprop="breadcrumb">
+  <li><a href="https://www.runescape.com/">Home</a></li>
+  <li><a href="http://services.runescape.com/m=hiscore/overview">HiScores</a></li>
+  <li>Skills</li>
+  </ul>
+  
+  <nav class="secondary">
+  <ul>
+  <li class=active><a href="https://secure.runescape.com/m=hiscore/ranking"><span>Skills</span></a></li>
+  <li><a href="https://secure.runescape.com/m=hiscore/ranking?category_type=1&amp;table=26"><span>Achievements</span></a></li>
+  <li><a href="http://services.runescape.com/m=clan-hiscores/ranking"><span>Clans</span></a></li>
+  <li><a href="http://services.runescape.com/m=temp-hiscores/"><span>Seasonal</span></a></li>
+  <li><a href="https://secure.runescape.com/m=hiscore/ranking?category_type=1"><span>Activities</span></a></li>
+  <li><a href="http://services.runescape.com/m=hiscore/compare"><span>Compare</span></a></li>
+  </ul>
+  </nav>
+  <nav class="tertiaryNav">
+  <ul>
+  <li>
+  <a href="https://secure.runescape.com/m=hiscore/ranking?category_type=0&table=21&time_filter=0&page=1"><span>All time</span></a>
+  </li>
+  <li>
+  <a href="https://secure.runescape.com/m=hiscore/ranking?category_type=0&table=21&time_filter=1&page=1" class="active"><span>Weekly</span></a>
+  </li>
+  <li class="lastNavContainer">
+  <a href="https://secure.runescape.com/m=hiscore/ranking?category_type=0&table=21&time_filter=2&page=1"><span>Monthly</span></a>
+  </li>
+  </ul>
+  </nav>
+  <div class="ranking content">
+  <div class="categorySection">
+  <div class="categories">
+  <h6 id="categorySelectorText">
+  Skills
+  </h6>
+  <div class="filterContainer">
+  <h3>Skills</h3>
+  <ul>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=1&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconAttack"></div>Attack</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=4&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconConstitution"></div>Constitution</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=15&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconMining"></div>Mining</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=3&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconStrength"></div>Strength</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=17&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconAgility"></div>Agility</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=14&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconSmithing"></div>Smithing</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=2&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconDefence"></div>Defence</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=16&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconHerblore"></div>Herblore</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=11&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconFishing"></div>Fishing</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=5&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconRanged"></div>Ranged</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=18&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconThieving"></div>Thieving</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=8&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconCooking"></div>Cooking</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=6&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconPrayer"></div>Prayer</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=13&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconCrafting"></div>Crafting</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=12&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconFiremaking"></div>Firemaking</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=7&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconMagic"></div>Magic</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=10&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconFletching"></div>Fletching</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=9&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconWoodcutting"></div>Woodcutting</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconRunecrafting"></div>Runecrafting</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=19&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconSlayer"></div>Slayer</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=20&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconFarming"></div>Farming</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=23&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconConstruction"></div>Construction</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=22&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconHunter"></div>Hunter</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=24&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconSummoning"></div>Summoning</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=25&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconDungeoneering"></div>Dungeoneering</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=26&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconDivination"></div>Divination</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=27&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconInvention"></div>Invention</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=28&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconArchaeology"></div>Archaeology</a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=0&amp;date=1610739396557&amp;time_filter=1&amp;page=1"><div class="hiscoreIcon iconOverall"></div>Overall</a>
+  </li>
+  </ul>
+  </div>
+  </div>
+  <h3 class="descTrigger">
+  Runecrafting
+  </h3>
+  <p class="hiScoreDescription">Allows the creation of runes for rune and pure essence. Higher levels allow more rune types to be made, as well as multiple runes per essence.</p>
+  <div class="filterDivide"></div>
+  <div class="filter">
+  <h6>View:</h6>
+  <ul>
+  <li class="active"><a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&table=21&date=1610739396557&time_filter=1&page=1">All</a></li>
+  <li><a href="http://services.runescape.com/m=hiscore/friends?category_type=0&table=21&date=1610739396557&time_filter=1&page=1">Friends</a></li>
+  <li><a href="http://services.runescape.com/m=hiscore/ranking?user=&findme=1&table=21&date=1610739396557&category_type=0&time_filter=1">Your Rank</a></li>
+  </ul>
+  <div class="timeFilterCountdownContainer">
+  <div class="finishedTextContainer">
+  <p>This HiScore has finished.</p>
+  </div>
+  </div>
+  </div>
+  </div>
+  <div class="tempHSUserSearchError searchErrorSkillSlctd">
+  <p class="error">Sorry, there are currently no players to display</p>
+  </div>
+  </div>
+  <aside role="complementary" class="sidebar">
+  <section class="input heavy archiveControlSection">
+  <div class="archiveControls">
+  
+  <h3>Select a month</h3>
+  <ul class="archiveMonthly">
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1585758671337">
+  Apr
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1588350671337">
+  May
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1591138800000">
+  Jun
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1593621071337">
+  Jul
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1596299471337">
+  Aug
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1599001200000">
+  Sep
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1601569871337">
+  Oct
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1604448000000">
+  Nov
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1606867200000">
+  Dec
+  </a>
+  </li>
+  <li>
+  <span class="hiscoreArchiveSelected">
+  Jan
+  </span>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1612310400000">
+  Feb
+  </a>
+  </li>
+  <li>
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1614729600000">
+  Mar
+  </a>
+  </li>
+  </ul>
+  <h3>Select a week</h3>
+  <div class="archiveWeekly">
+  <h6>
+  <span class="weekNumber selectedWeek">Week 3 |</span> <span class="weekDates selectedWeek">13 Jan - 19 Jan</span>
+  </h6>
+  <div class="weeksContainer">
+  <ul>
+  <li>
+  
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1609522271337">
+  <span class="weekNumber">Week 1 |</span> <span class="weekDates">30 Dec - 05 Jan</span>
+  </a>
+  
+  </li>
+  <li>
+  
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1609891200000">
+  <span class="weekNumber">Week 2 |</span> <span class="weekDates">06 Jan - 12 Jan</span>
+  </a>
+  
+  </li>
+  <li>
+  
+  <span class="currentWeek">
+  <span class="weekNumber selectedWeek">Week 3 |</span> <span class="weekDates selectedWeek">13 Jan - 19 Jan</span>
+  </span>
+  
+  </li>
+  <li>
+  
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1611100800000">
+  <span class="weekNumber">Week 4 |</span> <span class="weekDates">20 Jan - 26 Jan</span>
+  </a>
+  
+  </li>
+  <li>
+  
+  <a href="http://services.runescape.com/m=hiscore/ranking?category_type=0&amp;table=21&amp;time_filter=1&date=1611705600000">
+  <span class="weekNumber">Week 5 |</span> <span class="weekDates">27 Jan - 02 Feb</span>
+  </a>
+  
+  </li>
+  </ul>
+  </div>
+  </div>
+  
+  </div>
+  </section>
+  <section class="input">
+  <h3>Search For A Player</h3>
+  <form action="ranking" class="index">
+  <input type="hidden" name="table" value="21" />
+  <input type="hidden" name="category_type" value="0" />
+  <input type="hidden" name="time_filter" value="1" />
+  <input type="hidden" name="date" value="1610739396557" />
+  <input type="text" placeholder="Player Name" class="placeholder text" title="Player Name" name="user" maxlength="12" />
+  
+  <div class="btnWrap ">
+  <div class="btn">
+  <div class="btnRight">
+  <input type="submit" value="Go" name="" />
+  </div>
+  </div>
+  </div>
+  </form>
+  </section>
+  </aside>
+  </div>
+  </div>
+  </div>
+  <footer class="footer" role="contentinfo">
+  <div class="footer__inner">
+  <a href="https://www.jagex.com/" class="footer__jagex ext" data-title="footer_jagex">Jagex</a>
+  <div class="footer__paragraph">
+  <p>This website and its contents are copyright &copy; 1999 - 2021 Jagex Ltd.</p>
+  <p>220 Science Park, Cambridge, CB4 0WA, United Kingdom</p>
+  <p>Use of this website is subject to our <a id="footerTermsLink" href="https://www.jagex.com/terms/terms.ws" class="ext footer__paragraph__link" data-title="footer_terms">Terms &amp; Conditions</a> and <a id="footerPrivacyLink" href="https://www.jagex.com/privacy/privacy.ws" class="ext footer__paragraph__link" data-title="footer_privacy">Privacy Policy</a>.</p>
+  <p><a id="footerRulesLink" href="https://www.jagex.com/terms/rules-of-runescape" class="ext footer__paragraph__link footer__paragraph__link--rules">Rules of RuneScape</a><a id="footerCookiesLink" href="https://www.jagex.com/terms/cookies.ws" class="ext footer__paragraph__link" data-title="footer_changecookie">Change Cookie Settings</a></p>
+  </div>
+  
+  
+  <div class="language" id="footerSelectLanguage">
+  <div class="language__inner">
+  <ul class="language__list">
+  <li class="language__list__item--en language__list__item"><span class="language__item__span">
+  English
+  </span></li>
+  <li class="language__list__item--de language__list__item"><a class="language__item__link" href="https://www.runescape.com/l=1/?set_lang=1">Deutsch</a></li>
+  <li class="language__list__item--fr language__list__item"><a class="language__item__link" href="https://www.runescape.com/l=2/?set_lang=2">FranÃ§ais</a></li>
+  <li class="language__list__item--pt language__list__item"><a class="language__item__link" href="https://www.runescape.com/l=3/?set_lang=3">PortuguÃªs (BR)</a></li>
+  </ul>
+  </div>
+  </div>
+  </div>
+  </footer>
+  <script type="text/javascript">
+   var isMemb = -1, loggedIn = -1, savePromoBoxes = 'https://secure.runescape.com/m=website-data/updatePromoBoxes.json', pageLocation = 'https://secure.runescape.com/m=hiscore/ranking%3Fcategory_type%3D0%26table%3D21%26time_filter%3D1%26date%3D1610739396557%26page%3D3001';
+   document.domain = 'runescape.com';
+   var baseURL = 'https://www.runescape.com',
+   RS3 = RS3 || {},
+   currentLangId = 0;
+      RS3.imgRoot = 'https://www.runescape.com/img/rs3',
+      RS3.websiteDataUrl = 'https://secure.runescape.com/m=website-data',
+      RS3.webloginUrl= 'https://secure.runescape.com/m=weblogin',
+      RS3.newsUrl= 'https://secure.runescape.com/m=news',
+      RS3.TRACKING_HOME_PAGE_LOADED = 9000,
+      RS3.TRACKING_PLAY_BUTTON_CLICKED = 9200;
+   var JXGLOBAL = {};
+   JXGLOBAL.client = [{
+    'platform': 'Windows_x86',
+    'filename': 'runescape.msi',
+    'version': '1.4.3',
+    'size': '23'
+   },{
+    'platform': 'OSX_x86',
+    'filename': 'runescape.dmg',
+    'version': '1.4.3',
+    'size': '1'
+   }];
+  </script>
+  <script src="https://www.runescape.com/js/c/responsive/vendor-1.js"></script>
+  <script type="text/javascript" src="https://www.runescape.com/js/rs3/plugins-100.js"></script>
+  <script type='text/javascript' src='https://www.runescape.com/js/jagex_global-100.js'></script>
+  <script>
+   var RESPONSIVE = RESPONSIVE || {};
+   RESPONSIVE.constant = RESPONSIVE.constant || {};
+   
+   
+    RESPONSIVE.constant.user = {
+     language: 0,
+     isLoggedIn: 0
+    };
+   
+  </script>
+  <script type="text/javascript" src="https://www.runescape.com/js/rs3/gtm-100.js"></script>
+  <script type="text/javascript" src="https://www.runescape.com/js/c/rs3/functions-135.js"></script>
+  
+  <script async type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=2&cb=1031983842"></script>
+  </body>
+  </html>
+  `
+}

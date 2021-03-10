@@ -1,17 +1,17 @@
 import Nightmare from "nightmare";
-import parse from "node-html-parser";
-import { HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
-import { error, bold, pause, printProgress, warning, WEEK_TIMELAPSE, TabularFunction, ok } from "./utils";
-import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD } from "./settings";
-import persistence from "./persistence";
 import got, { OptionsOfJSONResponseBody } from "got";
 import tunnel from 'tunnel';
+import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD } from "./settings";
+import { ExpPage, HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
 import validate from "./validate";
+import { error, bold, pause, printProgress, warning, WEEK_TIMELAPSE, TabularFunction, ok, getExpPage } from "./utils";
+import persistence from "./persistence";
+
 
 const HIGHSCORE_ENDPOINT: string = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0';
 const HIGHSCORE_PAGENUMS_TO_SEARCH: number[] = [1, 51, 101, 201, 301, 401, 501, 1001, 2001, 3001];
 const PRICE_DATA_ENDPOINT: string = 'http://www.grandexchangecentral.com/include/gecgraphjson.php?jsid=';
-const MAX_RETRIES = 3; // number of retries per URL
+const MAX_RETRIES = 3; // maximum number of retries per URL
 
 let _rateLimitPeriod: number = RATE_LIMIT_PERIOD;
 const _proxyErrorCounter: [number, string][] = Array.from({ length: PROXY_LIST.length }, (_, i) => [0, PROXY_LIST[i]]);
@@ -45,8 +45,6 @@ function setRateLimitPeriod(ms: number) {
  * @param startTime Unix time within Timeframe to search.
  */
 function geSkillHighscoreUrlSet(skill: Skill, timeframe: Timeframe, startTime: number): string[] {
-    validate.skill(skill);
-    validate.timeframe(timeframe);
     if (startTime < new Date('01/01/2010').getTime()) { throw new RangeError('Start time must UNIX time in ms after the year 2010.') }
 
     return HIGHSCORE_PAGENUMS_TO_SEARCH
@@ -108,7 +106,7 @@ function printProxyErrorCount(top: number = PROXY_LIST.length): void {
  */
 async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<HtmlPage> {
     validate.url(url);
-    if (useProxy !== undefined && typeof useProxy !== 'boolean') { throw new TypeError('useProxy must be a boolean toggle.'); }
+    if (typeof useProxy !== 'boolean') { throw new TypeError('useProxy must be a boolean toggle.'); }
 
     const crawlerOptions: IConstructorOptionsComplete = {
         show: false,
@@ -127,7 +125,7 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
         .wait('body')
         .evaluate(() => document.documentElement.outerHTML)
         .end()
-        .then((response: string) => response) // TODO is this needed?
+        .then((response: string) => response)
         .catch((err: Error) => {
             if (useProxy) {
                 // TODO Handle retry with recursive call
@@ -143,24 +141,12 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
 }
 
 /**
- * Check if HtmlPage is a valid Jagex exp gain highscore page.
- * @param htmlPage Html page to be checked.
- */
-function isValidExpGainPage(htmlPage: HtmlPage): boolean {
-    try { validate.htmlPage(htmlPage); } catch (_) { return false; }
-
-    if (htmlPage.html.includes('Sorry, there are currently no players to display')) {
-        persistence.saveEndpointWithoutEnoughPlayers(htmlPage.url);
-        console.log(warning(`\nThere were not enough players at URL:${htmlPage.url}\nEndpoint has been saved for future calls.`));
-    }
-    return parse(htmlPage.html).querySelector('div.tableWrap') !== null;
-}
-
-/**
- * Load all HTML pages from Jagex highscore for a skill. This will include all weeks and all page numbers for each week.
+ * Load all ExpPage from Jagex highscore for a skill. This will include all weeks and all page numbers for each week.
+ * Pages without enough players will not be included in return array.
  * @param skill Skill for which to load pages.
  */
-async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]> {
+// TODO add recursive retries
+async function getWeeklyExpPages(skill: Skill): Promise<ExpPage[]> {
     validate.skill(skill);
 
     const oneWeekBeforeToday = Date.now() - WEEK_TIMELAPSE;
@@ -168,56 +154,47 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
     while (weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE < oneWeekBeforeToday) {
         weeksStartTime.push(weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE);
     }
-
     const allWeeksHighscoreUrlSet = weeksStartTime.reduce((pages: string[], weekStartTime: number): string[] =>
         pages.concat(geSkillHighscoreUrlSet(skill, Timeframe.weekly, weekStartTime)), []);
 
-    const htmlPages: HtmlPage[] = [];
+    const expPages: ExpPage[] = [];
     let urlIndex = 0;
     printProgress(0);
     let hadProxyErrorEvent = false;
     while (urlIndex < allWeeksHighscoreUrlSet.length) {
-        const loadPromises: Promise<HtmlPage | undefined>[] = [];
-        for (let i = 0; urlIndex < allWeeksHighscoreUrlSet.length && i < PROXY_LIST.length; i++) {
-            const url = allWeeksHighscoreUrlSet[urlIndex];
-            urlIndex++;
-            if (!persistence.isEndpointWithoutEnoughPlayers(url)) {
-                if (persistence.isInStorage(url)) {
-                    const html = persistence.getExpGainPageFromUrl(url);
-                    if (html === null) { throw new Error('Datastore did not return HtmlPage after confirming it existed.'); }
-                    htmlPages.push(html);
-                    i--; // Proxy was not used
-                } else {
-                    loadPromises.push(
-                        loadHtmlPage(url, true)
-                            .then(page => {
-                                if (page !== undefined) {
-                                    if (isValidExpGainPage(page)) {
-                                        persistence.saveHtmlPage(page);
-                                        return page;
-                                    }
-                                } else {
-                                    console.log(error(`\nServer responded with critical error.\n At URL: ${url}`));
-                                }
-                                return undefined;
-                            }).catch((err: Error) => {
-                                // Allow failure with notification. This way you benefit from other proxies running in parallel.
-                                console.log(warning('\n' + err.message));
-                                hadProxyErrorEvent = true;
-                                return undefined;
-                            }));
-                }
+        const loadPromises: Promise<ExpPage | null>[] = [];
+        for (let proxyIndex = 0; urlIndex < allWeeksHighscoreUrlSet.length && proxyIndex < PROXY_LIST.length; proxyIndex++) {
+            const url = allWeeksHighscoreUrlSet[urlIndex++];
+            const storedExpPage = persistence.fetchExpPage(url);
+            if (storedExpPage === null) {
+                loadPromises.push(
+                    loadHtmlPage(url, true)
+                        .then((htmlPage: HtmlPage) => getExpPage(htmlPage))
+                        .catch((err: Error) => {
+                            // Allow failure with notification. This allows you to benefit from other proxies running in parallel at expense of ensuring all data loaded.
+                            console.log(warning('\n' + err.message));
+                            hadProxyErrorEvent = true;
+                            return null;
+                        }));
             } else {
-                i--; // Proxy was not used
+                proxyIndex--; // Proxy was not used
+                if (storedExpPage.hasData) {
+                    expPages.push(storedExpPage);
+                }
             }
         }
-        printProgress(Math.round((urlIndex / allWeeksHighscoreUrlSet.length) * 100));
+        printProgress(Math.round(((urlIndex - loadPromises.length) / allWeeksHighscoreUrlSet.length) * 100));
         await Promise.all(loadPromises)
-            .then(pages => {
-                pages.forEach(page => {
-                    if (page !== undefined) { htmlPages.push(page); }
+            .then((expPages: (ExpPage | null)[]) =>
+                expPages.forEach(expPage => {
+                    if (expPage !== null) {
+                        if (expPage.hasData) {
+                            expPages.push(expPage);
+                        } else {
+                            console.log(warning(`\nThere were not enough players at URL:${expPage.url}\nEndpoint has been saved for future calls.`));
+                        }
+                    }
                 })
-            }
             ).then(() => {
                 printProgress(Math.round((urlIndex / allWeeksHighscoreUrlSet.length) * 100));
             });
@@ -226,23 +203,21 @@ async function getSkillWeeklyExpGainHtmlPages(skill: Skill): Promise<HtmlPage[]>
     if (hadProxyErrorEvent) {
         printProxyErrorCount();
     }
-    return htmlPages;
+    return expPages;
 }
 
 /**
  * Get all HTML exp gain pages.
  * @returns Promise<HtmlPage[][]> where the row can be indexed with Skill enum values to obtain that particular skill's pages.
  */
-async function getAllExpGainHtmlPages(): Promise<HtmlPage[][]> {
-    setRateLimitPeriod(0);
-    const skillPages: HtmlPage[][] = [];
+async function getAllWeeklyExpPages(): Promise<ExpPage[][]> {
+    const skillPages: ExpPage[][] = [];
     for (let skill in Skill) {
         const skillNum: number = parseInt(skill);
         if (isNaN(skillNum)) { continue; }
         console.log('\nFetching experience gain data for skill: ' + bold(Skill[skillNum]));
-        skillPages[skillNum] = await getSkillWeeklyExpGainHtmlPages(skillNum);
+        skillPages[skillNum] = await getWeeklyExpPages(skillNum);
     }
-    setRateLimitPeriod(RATE_LIMIT_PERIOD);
     return skillPages;
 }
 
@@ -265,7 +240,6 @@ async function getYearPriceData(itemID: number, proxy?: string, numRetries: numb
         },
         responseType: 'json',
     }
-
     if (proxy !== undefined) {
         const proxyHost = proxy.split(':')[0];
         const proxyPort = parseInt(proxy.split(':')[1]);
@@ -285,9 +259,7 @@ async function getYearPriceData(itemID: number, proxy?: string, numRetries: numb
         }
     }
 
-    async function getResponseRecursively(retries: number): Promise<[number, number][]> {
-        console.log('getResponseRecursively called retries = ', retries); // TODO rm
-
+    async function getResponseRecursively(retries: number): Promise<[number, number][] | null> {
         if (typeof retries !== 'number' || retries < 0) { throw new TypeError('retries must be a number greater than zero.'); }
 
         return await got<[number, number][]>(PRICE_DATA_ENDPOINT + itemID, options)
@@ -307,12 +279,12 @@ async function getYearPriceData(itemID: number, proxy?: string, numRetries: numb
                 if (retries > 1) {
                     return await getResponseRecursively(--retries);
                 } else {
-                    //console.log(error(error.response.body));
                     throw new Error(error(`Error attempting to load price data ${(proxy === undefined) ? 'without a proxy.' : ('using proxy ' + proxy)}\n${err.message}`));
                 }
             });
     }
-    const response: [number, number][] = await getResponseRecursively(numRetries);
+
+    const response: [number, number][] | null = await getResponseRecursively(numRetries);
     // null if no data is available or bad request
     if (response === null) { return; }
     const timeSeries: TabularFunction = new TabularFunction();
@@ -322,19 +294,18 @@ async function getYearPriceData(itemID: number, proxy?: string, numRetries: numb
     return timeSeries;
 }
 
-//export default { geSkillHighscoreUrlSet, proxyGenerator, loadHtmlPage, isValidExpGainPage, getSkillWeeklyExpGainHtmlPages, getAllExpGainHtmlPages };
 export default {
-    loadHtmlPage,
-    getSkillWeeklyExpGainHtmlPages,
-    getAllExpGainHtmlPages,
-    isValidExpGainPage,
+    getWeeklyExpPages,
+    getAllWeeklyExpPages,
     printProxyErrorCount,
     getYearPriceData,
+    HIGHSCORE_ENDPOINT,
 
     /**
      * Do not use these functions outside of testing.
      */
     __tests__: {
+        loadHtmlPage,
         geSkillHighscoreUrlSet,
         proxyGenerator,
         logProxyErrorEvent,
