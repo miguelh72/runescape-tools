@@ -10,9 +10,7 @@ import validate from './validate';
 
 
 (async () => {
-    //const priceData = await grandexchange.getYearPriceData(2);
-    //console.log(priceData?.length)
+    //persistence.convertToExpPageSystem();
 
     persistence.verifyDatabaseIntegrity();
-
 })();

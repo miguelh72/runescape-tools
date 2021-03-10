@@ -254,7 +254,7 @@ async function getAllExpGainHtmlPages(): Promise<HtmlPage[][]> {
  */
 async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<TabularFunction | undefined> {
     if (typeof itemID !== 'number' || itemID < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
-    validate.proxy(proxy as string);
+    if (proxy !== undefined) { validate.proxy(proxy); }
     if (typeof numRetries !== 'number' || numRetries < 0) { throw new TypeError('numRetries must be a number greater than zero.'); }
 
     const options: OptionsOfJSONResponseBody = {

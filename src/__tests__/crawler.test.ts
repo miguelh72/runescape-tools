@@ -72,7 +72,7 @@ test('Retrieve all weekly exp gain pages for a skill', async () => {
         expect(wasProcessed).toBe(true);
     });
 }, 10000);
-/*
+
 test("Retrieve a year's worth of price data", async () => {
     const priceData = await crawler.getYearPriceData(556);
     expect(priceData !== undefined).toBe(true);
@@ -83,4 +83,3 @@ test("Retrieve a year's worth of price data", async () => {
     // Don't expect air rune to be worth 200 anytime soon
     expect(priceData?.f.some(v => v > 200)).toBe(false);
 });
-*/

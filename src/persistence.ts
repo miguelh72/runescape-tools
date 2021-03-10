@@ -1,13 +1,37 @@
+import { bold } from 'chalk';
 import fs from 'fs';
 import parse from 'node-html-parser';
-import { DATASTORE_FOLDER, ITEM_DB_NAME } from "./settings";
-import { HtmlPage, ItemCategory, Skill } from './types';
-import { error } from "./utils";
+import crawler from './crawler';
+import { CRAWL_WEEK_START, DATASTORE_FOLDER, ITEM_DB_NAME } from "./settings";
+import { ExpPage, HtmlPage, ItemCategory, Skill, Timeframe } from './types';
+import { error, WEEK_TIMELAPSE } from "./utils";
 import validate from './validate';
 
 const NOT_ENOUGH_PLAYERS_FILENAME = 'not_enough_players.txt';
 
 const _notEnoughPlayersURLs = loadNotEnoughPlayersURLList();
+
+const _expPages: ExpPage[][][] = loadExpPages(); // Index by [Timeframe][Skill][Nonspecific page ordering in list]
+
+function loadExpPages(): ExpPage[][][] {
+    const allExpPages: ExpPage[][][] = Array.from({ length: 3 }, () => []);
+    for (let timeframe = 0; timeframe < 3; timeframe++) {
+        for (let skill in Skill) {
+            const skillNum: number = parseInt(skill);
+            if (isNaN(skillNum)) { continue; }
+            const filepath = getExpPagesFilepath(skillNum, timeframe);
+
+            let expPages: ExpPage[] = []
+            if (fs.existsSync(filepath)) {
+                expPages = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+            }
+
+            if (!(expPages instanceof Array)) { throw new TypeError(`Loaded ExpPage[] is not of type Array for file at ${filepath}.`); }
+            allExpPages[timeframe][skillNum] = expPages;
+        }
+    }
+    return allExpPages;
+}
 
 /**
  * Load list of url endpoints without enough players.
@@ -124,6 +148,160 @@ function getExpGainPageFromUrl(url: string): HtmlPage | null {
 }
 
 /**
+ * Validate interfaces of an ItemCategory array. Throws errors if objects dont match interface.
+ * @param itemList ItemCategory[] to be validated.
+ */
+function validateItemCategoryArray(itemList: ItemCategory[]): void {
+    if (!(itemList instanceof Array)) { throw new Error('Item list was not an array.'); }
+    itemList.forEach(itemCategory => {
+        validate.itemCategory(itemCategory)
+    });
+}
+
+/**
+ * Load available Grand Exchange item list from storage.
+ */
+function loadItemList(): ItemCategory[] {
+    if (fs.existsSync(ITEM_DB_NAME)) {
+        const itemList: ItemCategory[] = JSON.parse(fs.readFileSync(ITEM_DB_NAME, 'utf8'));
+        validateItemCategoryArray(itemList);
+        return itemList;
+    } else {
+        return [];
+    }
+}
+
+/**
+ * Store the item list to persistent storage.
+ * @param itemList ItemCategory[] the item list to be stored.
+ */
+function saveItemList(itemList: ItemCategory[]) {
+    validateItemCategoryArray(itemList);
+    fs.writeFileSync(ITEM_DB_NAME, JSON.stringify(itemList));
+}
+
+// TODO remove later
+function convertToExpPageSystem() {
+    const HIGHSCORE_ENDPOINT: string = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0';
+    const HIGHSCORE_PAGENUMS_TO_SEARCH: number[] = [1, 51, 101, 201, 301, 401, 501, 1001, 2001, 3001];
+    function getTimestampFromUrl(url: string): number {
+        validate.url(url);
+
+        let dateStartIndex = url.indexOf('&date=');
+        if (dateStartIndex === -1) { throw new Error('URL does not contain date parameter'); }
+        dateStartIndex += 6;
+        const dateEndIndex = url.indexOf('&page=');
+        if (dateEndIndex === -1) { throw new Error('URL does not contain page parameter'); }
+        return parseInt(url.slice(dateStartIndex, dateEndIndex));
+    }
+    function getPageNumberFromUrl(url: string): number {
+        validate.url(url);
+
+        let pageNumStartIndex = url.indexOf('&page=');
+        if (pageNumStartIndex === -1) { throw new Error('URL does not contain page parameter'); }
+        pageNumStartIndex += 6;
+        return parseInt(url.slice(pageNumStartIndex, url.length));
+    }
+    function getSkillFromUrl(url: string): Skill {
+        validate.url(url);
+
+        let tableStartIndex = url.indexOf('&table=');
+        if (tableStartIndex === -1) { throw new Error('URL does not contain table parameter'); }
+        tableStartIndex += 7;
+        const tableEndIndex = url.indexOf('&time_filter=');
+        if (tableEndIndex === -1) { throw new Error('URL does not contain time_filter parameter'); }
+        return parseInt(url.slice(tableStartIndex, tableEndIndex));
+    }
+    function geSkillHighscoreUrlSet(skill: Skill, timeframe: Timeframe, startTime: number): string[] {
+        validate.skill(skill);
+        validate.timeframe(timeframe);
+        if (startTime < new Date('01/01/2010').getTime()) { throw new RangeError('Start time must UNIX time in ms after the year 2010.') }
+
+        return HIGHSCORE_PAGENUMS_TO_SEARCH
+            .map(pgNum => `${HIGHSCORE_ENDPOINT}&table=${skill}&time_filter=${timeframe}&date=${startTime}&page=${pgNum}`);
+    }
+    function getNotEnoughPlayersExpPage(url: string): ExpPage {
+        validate.url(url);
+
+        const periodStart: number = getTimestampFromUrl(url);
+        const pageNum: number = getPageNumberFromUrl(url);
+        return { url, exp: 0, periodStart, pageNum, hasData: false };
+    }
+    function getPageTotalExp(page: HtmlPage): number {
+        validate.htmlPage(page);
+        if (!crawler.isValidExpGainPage(page)) { throw new TypeError('Page must be a valid highscore experience gain page.'); }
+
+        return parse(page.html)
+            .querySelectorAll('div.tableWrap table')[1]
+            .querySelectorAll('tr')
+            .map((tr) => parseInt(tr.querySelectorAll('td')[2].text.trim().replace(/[,]/g, '')))
+            .reduce((sum, exp) => sum + exp);
+    }
+    function getExpPage(htmlPage: HtmlPage): ExpPage {
+        validate.htmlPage(htmlPage);
+
+        const periodStart: number = getTimestampFromUrl(htmlPage.url);
+        const pageNum: number = getPageNumberFromUrl(htmlPage.url);
+        const exp: number = getPageTotalExp(htmlPage);
+        return { url: htmlPage.url, exp, periodStart, pageNum, hasData: true };
+    }
+    function getSkillWeeklyExpGainPages(skill: Skill): ExpPage[] {
+        validate.skill(skill);
+
+        const oneWeekBeforeToday = Date.now() - WEEK_TIMELAPSE;
+        const weeksStartTime = [CRAWL_WEEK_START];
+        while (weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE < oneWeekBeforeToday) {
+            weeksStartTime.push(weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE);
+        }
+        const allWeeksHighscoreUrlSet = weeksStartTime.reduce((pages: string[], weekStartTime: number): string[] =>
+            pages.concat(geSkillHighscoreUrlSet(skill, Timeframe.weekly, weekStartTime)), []);
+        allWeeksHighscoreUrlSet.forEach(url => {
+            // Confirm all files are loaded
+            if (!isEndpointWithoutEnoughPlayers(url) && !isInStorage(url)) {
+                throw new Error(`URL ${url} was not in storage.\nExpected filepath ${getFilepathFromUrl(url)}`);
+            }
+            if (isEndpointWithoutEnoughPlayers(url) && isInStorage(url)) {
+                throw new Error(`URL ${url} was both in storage and in not enough players list.\nExpected filepath ${getFilepathFromUrl(url)}`);
+            }
+        });
+
+        const expPages: ExpPage[] = [];
+        allWeeksHighscoreUrlSet.forEach(url => {
+            if (isEndpointWithoutEnoughPlayers(url)) {
+                expPages.push(getNotEnoughPlayersExpPage(url));
+            } else {
+                const htmlPage = getExpGainPageFromUrl(url);
+                if (htmlPage === null) { throw new Error('Returned page was null.'); }
+                expPages.push(getExpPage(htmlPage));
+            }
+        });
+        expPages.forEach(expPage => validate.expPage(expPage));
+        return expPages;
+    }
+
+    for (let skill in Skill) {
+        const skillNum: number = parseInt(skill);
+        if (isNaN(skillNum)) { continue; }
+        console.log('\nConverting experience gain data for skill: ' + bold(Skill[skillNum]));
+        const skillExpPages: ExpPage[] = getSkillWeeklyExpGainPages(skillNum);
+        const filepath = getExpPagesFilepath(skillNum, Timeframe.weekly);
+        fs.writeFileSync(filepath, JSON.stringify(skillExpPages));
+    }
+}
+
+/**
+ * Generate storage filepath to JSON file storing ExpPage[] for particular Skill and Timeframe combination.
+ * @param skill Skill enum
+ * @param timeframe Timeframe enum
+ */
+function getExpPagesFilepath(skill: Skill, timeframe: Timeframe): string {
+    validate.skill(skill);
+    validate.timeframe(timeframe);
+
+    return `${DATASTORE_FOLDER}/exp_gain_${Timeframe[timeframe]}_${Skill[skill]}.json`;
+}
+
+/**
  * Verify integrity of data storage directory.
  */
 async function verifyDatabaseIntegrity() {
@@ -133,6 +311,12 @@ async function verifyDatabaseIntegrity() {
         NOT_ENOUGH_PLAYERS_FILENAME,
         NOT_ENOUGH_PLAYERS_FILENAME.slice(0, NOT_ENOUGH_PLAYERS_FILENAME.length - 4) + '_backup.txt'
     ];
+    for (let skill = 0; skill < 29; skill++) {
+        for (let timeframe = 0; timeframe < 3; timeframe++) {
+            const filepath = getExpPagesFilepath(skill, timeframe);
+            exceptions.push(filepath.slice(DATASTORE_FOLDER.length + 1, filepath.length));
+        }
+    }
     for (let dir of directories) {
         if (Skill[dir as any] === undefined && !exceptions.includes(dir)) {
             console.log(error(`Invalid subdirectory (not named after skill): ${dir}`));
@@ -169,39 +353,6 @@ async function verifyDatabaseIntegrity() {
     return true;
 }
 
-/**
- * Validate interfaces of an ItemCategory array. Throws errors if objects dont match interface.
- * @param itemList ItemCategory[] to be validated.
- */
-function validateItemCategoryArray(itemList: ItemCategory[]): void {
-    if (!(itemList instanceof Array)) { throw new Error('Item list was not an array.'); }
-    itemList.forEach(itemCategory => {
-        validate.itemCategory(itemCategory)
-    });
-}
-
-/**
- * Load available Grand Exchange item list from storage.
- */
-function loadItemList(): ItemCategory[] {
-    if (fs.existsSync(ITEM_DB_NAME)) {
-        const itemList: ItemCategory[] = JSON.parse(fs.readFileSync(ITEM_DB_NAME, 'utf8'));
-        validateItemCategoryArray(itemList);
-        return itemList;
-    } else {
-        return [];
-    }
-}
-
-/**
- * Store the item list to persistent storage.
- * @param itemList ItemCategory[] the item list to be stored.
- */
-function saveItemList(itemList: ItemCategory[]) {
-    validateItemCategoryArray(itemList);
-    fs.writeFileSync(ITEM_DB_NAME, JSON.stringify(itemList));
-}
-
 export default {
     isEndpointWithoutEnoughPlayers,
     saveEndpointWithoutEnoughPlayers,
@@ -210,5 +361,6 @@ export default {
     getExpGainPageFromUrl,
     verifyDatabaseIntegrity,
     loadItemList,
-    saveItemList
+    saveItemList,
+    convertToExpPageSystem
 };
