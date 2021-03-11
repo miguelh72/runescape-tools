@@ -204,6 +204,17 @@ test('Interpolate TabularFunction', () => {
     expect(fnResult.f).toEqual([2, 2, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8]);
 });
 
+test('Converting TabularFunction to string JSON and back', () => {
+    let length = 10;
+    let x = Array.from({ length }, (_, i) => 2 * (i + 1));
+    let f = Array.from({ length }, (_, i) => i + 1);
+    let fn = new TabularFunction(f, x);
+    let stringFn = JSON.stringify(fn);
+    let recoveredFn = TabularFunction.fromObject(JSON.parse(stringFn));
+    expect(recoveredFn.x).toEqual(fn.x);
+    expect(recoveredFn.f).toEqual(fn.f);
+});
+
 test('Convert HtmlPage to ExpPage', () => {
     // Case page doesnt have data
     let expPage = getExpPage(notEnoughPlayersPageExample);

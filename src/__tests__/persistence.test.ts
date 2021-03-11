@@ -5,7 +5,7 @@ import persistence from '../persistence';
 import { DATASTORE_FOLDER } from '../settings';
 import { ExpPage } from '../types';
 import { getExpPage } from '../utils';
-import { expGainPageExample, notEnoughPlayersPageExample } from './results';
+import { expGainPageExample, itemPricesExample, notEnoughPlayersPageExample } from './results';
 
 test('Load and save item list', () => {
     // Test assumes this was ran beforehand and simply confirms all itesm are loaded.
@@ -30,6 +30,20 @@ test('Save, verify existence, and retrieve exp gain page.', () => {
     const expPage = persistence.fetchExpPage(expGainPageExample.url) as ExpPage;
     expect(expPage !== null).toBe(true)
     expect(expPage).toEqual(originalExpPage);
+});
+
+test('Delete, save, and fetch item price data', () => {
+    const filepath = persistence.__tests__.getPricesFilepath(itemPricesExample.id);
+    if (fs.existsSync(filepath)) {
+        fs.rmSync(filepath);
+    }
+
+    persistence.savePrices(itemPricesExample);
+    expect(fs.existsSync(filepath)).toBe(true);
+    const fetchedPrices = persistence.fetchPrices(itemPricesExample.id);
+    expect(fetchedPrices?.id).toEqual(itemPricesExample.id);
+    expect(fetchedPrices?.prices.x).toEqual(itemPricesExample.prices.x);
+    expect(fetchedPrices?.prices.f).toEqual(itemPricesExample.prices.f);
 });
 
 test('Verify data store integrity', async () => {

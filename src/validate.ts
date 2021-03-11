@@ -1,4 +1,5 @@
-import { ExpPage, HtmlPage, Item, ItemCategory, ItemCategoryChild, Skill, Timeframe } from "./types";
+import { ExpPage, HtmlPage, Item, ItemCategory, ItemCategoryChild, ItemPrices, Skill, Timeframe } from "./types";
+import { TabularFunction } from "./utils";
 
 /**
  * Validate a Skill parameter.
@@ -131,10 +132,20 @@ function itemCategory(itemCategory: ItemCategory): void {
  * @param proxy Proxy string to be validated.
  * @throws TypeError thrown if proxy is not valid.
  */
-function proxy(proxy: string) {
+function proxy(proxy: string): void {
     if (!/^\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b:\d{2,5}$/.test(proxy)) {
         throw new TypeError('Proxy is not in a valid format.');
     }
+}
+
+/**
+ * Validate an ItemPrices object.
+ * @param itemPrices ItemPrices object to be validated.
+ * @throws TypeError thrown if ItemPrices is not valid.
+ */
+function itemPrices(itemPrices: ItemPrices): void {
+    if (typeof itemPrices.id !== 'number' || itemPrices.id < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
+    if (!(itemPrices.prices instanceof TabularFunction)) { throw new TypeError("Item's price timeseries must be a TabularFunction object."); }
 }
 
 /**
@@ -151,4 +162,5 @@ export default {
     item,
     itemCategory,
     proxy,
+    itemPrices,
 };

@@ -1,4 +1,5 @@
 import { IConstructorOptions } from "nightmare";
+import { TabularFunction } from "./utils";
 
 /**
  * Skill enumeration. Value is table number for endpoint calls.
@@ -95,4 +96,12 @@ export interface ItemCategory {
     id: number,
     name: string,
     items: ItemCategoryChild[]
+}
+
+/**
+ * Grand Exchange price series for an item.
+ */
+export interface ItemPrices {
+    id: number,
+    prices: TabularFunction,
 }

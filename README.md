@@ -4,7 +4,6 @@ Tool used to process available Runescape player and market data and make forecas
 
 ## TODO
 
--   Load item data from http://www.grandexchangecentral.com. Store results!!!
--   -   Figure out which proxies or how to use a proxy for this.
--   Feature extraction and analysis of data.
--   Add automatic backup system
+-   Load item data using proxies.
+-   Feature extraction and analysis of data in preparation for ML analysis.
+-   Automatic backup system.

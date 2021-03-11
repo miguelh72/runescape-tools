@@ -1,11 +1,12 @@
 import fs from 'fs';
 import { DATASTORE_FOLDER } from "./settings";
-import { ExpPage, ItemCategory, Skill, Timeframe } from './types';
-import { error } from "./utils";
+import { ExpPage, ItemCategory, ItemPrices, Skill, Timeframe } from './types';
+import { error, TabularFunction } from "./utils";
 import validate from './validate';
 import crawler from './crawler';
 
 const ITEM_DB_NAME: string = 'items.json';
+const PRICES_SUBFOLDER: string = 'prices';
 
 const _expPages: ExpPage[][][] = loadExpPages();
 
@@ -45,9 +46,6 @@ function getTimeframeFromHighscoreUrl(url: string): Timeframe {
  * @param timeframe Timeframe enum
  */
 function getExpPagesFilepath(skill: Skill, timeframe: Timeframe): string {
-    validate.skill(skill);
-    validate.timeframe(timeframe);
-
     return `${DATASTORE_FOLDER}/exp_gain_${Timeframe[timeframe]}_${Skill[skill]}.json`;
 }
 
@@ -109,7 +107,7 @@ function saveExpPage(expPage: ExpPage): void {
         _expPages[timeframe][skill].push(expPage);
     }
 
-    fs.writeFileSync(getExpPagesFilepath(skill, timeframe), JSON.stringify(_expPages[timeframe][skill]))
+    fs.writeFileSync(getExpPagesFilepath(skill, timeframe), JSON.stringify(_expPages[timeframe][skill], undefined, 2))
 }
 
 /**
@@ -124,7 +122,7 @@ function validateItemCategoryArray(itemList: ItemCategory[]): void {
 }
 
 /**
- * Load available Grand Exchange item list from storage.
+ * Fetch available Grand Exchange item list from storage.
  */
 function fetchItemList(): ItemCategory[] {
     const filepath = DATASTORE_FOLDER + '/' + ITEM_DB_NAME
@@ -141,10 +139,49 @@ function fetchItemList(): ItemCategory[] {
  * Store the item list to persistent storage.
  * @param itemList ItemCategory[] the item list to be stored.
  */
-function saveItemList(itemList: ItemCategory[]) {
+function saveItemList(itemList: ItemCategory[]): void {
     validateItemCategoryArray(itemList);
 
-    fs.writeFileSync(DATASTORE_FOLDER + '/' + ITEM_DB_NAME, JSON.stringify(itemList));
+    fs.writeFileSync(DATASTORE_FOLDER + '/' + ITEM_DB_NAME, JSON.stringify(itemList, undefined, 2));
+}
+
+/**
+ * Generate storage filepath to JSON file storing ItemPrices for particular Item.
+ * @param itemID ID of item to generate filepath for.
+ */
+function getPricesFilepath(itemID: number): string {
+    return `${DATASTORE_FOLDER}/${PRICES_SUBFOLDER}/${itemID}.json`;
+}
+
+/**
+ * Fetch available item prices from storage. Returns null if no data is found.
+ * @param itemID Item ID of object to search prices for.
+ */
+function fetchPrices(itemID: number): ItemPrices | null {
+    if (typeof itemID !== 'number' || itemID < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
+
+    const filepath = getPricesFilepath(itemID);
+    if (fs.existsSync(filepath)) {
+        const itemPricesAmeableObject = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        const itemPrices: ItemPrices = { id: itemPricesAmeableObject.id, prices: TabularFunction.fromObject(itemPricesAmeableObject.prices) };
+        validate.itemPrices(itemPrices);
+        return itemPrices;
+    } else {
+        return null;
+    }
+}
+
+/**
+ * Save item prices to storage. Warning, this will overwrite previously stored data.
+ * @param itemPrices ItemPrices object to store.
+ */
+function savePrices(itemPrices: ItemPrices): void {
+    validate.itemPrices(itemPrices);
+
+    if (!fs.existsSync(`${DATASTORE_FOLDER}/${PRICES_SUBFOLDER}`)) {
+        fs.mkdirSync(`${DATASTORE_FOLDER}/${PRICES_SUBFOLDER}`);
+    }
+    fs.writeFileSync(getPricesFilepath(itemPrices.id), JSON.stringify(itemPrices, undefined, 2));
 }
 
 /**
@@ -153,7 +190,7 @@ function saveItemList(itemList: ItemCategory[]) {
 async function verifyDatabaseIntegrity() {
     // Verify no invalid subdirectories
     const directories = fs.readdirSync(DATASTORE_FOLDER);
-    const expected: string[] = ['archive', 'backup', ITEM_DB_NAME];
+    const expected: string[] = ['archive', 'backup', ITEM_DB_NAME, PRICES_SUBFOLDER];
     for (let skill = 0; skill < 29; skill++) {
         for (let timeframe = 0; timeframe < 3; timeframe++) {
             const filepath = getExpPagesFilepath(skill, timeframe);
@@ -175,12 +212,15 @@ export default {
     saveItemList,
     fetchExpPage,
     saveExpPage,
+    fetchPrices,
+    savePrices,
     verifyDatabaseIntegrity,
 
     /**
      * Do not use these functions outside of testing.
      */
     __tests__: {
-        ITEM_DB_NAME
+        ITEM_DB_NAME,
+        getPricesFilepath,
     }
 };

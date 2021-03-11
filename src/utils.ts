@@ -208,6 +208,29 @@ export class TabularFunction {
         })
     }
 
+    /**
+     * Serialize TabularFunction to an object ameable to being converted by JSON.stringify() to valid JSON.
+     */
+    toJSON(): { x: number[], f: number[] } {
+        return { x: this.#x, f: this.#f };
+    }
+
+    /**
+     * Convert object of type {x: number[], f: number[]} to TabularFunction. Typically an object recovered from serialized TabularFunction by JSON.parse().
+     * @param obj Object to try to convert.
+     */
+    static fromObject(obj: { x: number[], f: number[] }): TabularFunction {
+        if (!(obj.x instanceof Array) || !(obj.f instanceof Array)) { throw new TypeError('Object is not compatible with TabularFunction.'); }
+        obj.x.forEach(v => {
+            if (typeof v !== 'number') { throw new TypeError('All x values must be of type number.'); }
+        })
+        obj.f.forEach(v => {
+            if (typeof v !== 'number') { throw new TypeError('All f values must be of type number.'); }
+        })
+
+        return new TabularFunction(obj.f, obj.x);
+    }
+
     toString(): string {
         return `TabularFunction {
     x: [${this.#x.join(', ')}],

@@ -1,3 +1,4 @@
+import { TabularFunction } from '../utils';
 import validate from '../validate';
 
 test('Validate Skill', () => {
@@ -166,4 +167,18 @@ test('Validate proxy string format', () => {
     ];
     validProxies.forEach(proxy => expect(validate.proxy(proxy)).toBeUndefined());
     invalidProxies.forEach(proxy => expect(() => validate.proxy(proxy)).toThrowError(TypeError));
+});
+
+test('Validate ItemPrices', () => {
+    expect(validate.itemPrices({ id: 1, prices: new TabularFunction([1, 1, 1], [0, 1, 2]) })).toBeUndefined();
+
+    expect(() => validate.itemPrices({} as any)).toThrowError(TypeError);
+    expect(() => validate.itemPrices({ prices: new TabularFunction([1, 1, 1], [0, 1, 2]) } as any)).toThrowError(TypeError);
+    expect(() => validate.itemPrices({ id: 1 } as any)).toThrowError(TypeError);
+
+    expect(() => validate.itemPrices({ id: '1', prices: new TabularFunction([1, 1, 1], [0, 1, 2]) } as any)).toThrowError(TypeError);
+    expect(() => validate.itemPrices({ id: 1, prices: new TabularFunction(['1' as any, 1, 1], [0, 1, 2]) } as any)).toThrowError(TypeError);
+    expect(() => validate.itemPrices({ id: 1, prices: new TabularFunction([1, 1, 1], ['0' as any, 1, 2]) } as any)).toThrowError(TypeError);
+    expect(() => validate.itemPrices({ id: 1, prices: { x: [1, 1, 1], f: [0, 1, 2] } } as any)).toThrowError(TypeError);
+    expect(() => validate.itemPrices({ id: 1, prices: {} } as any)).toThrowError(TypeError);
 });

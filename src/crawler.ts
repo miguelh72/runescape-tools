@@ -1,8 +1,8 @@
 import Nightmare from "nightmare";
 import got, { OptionsOfJSONResponseBody } from "got";
 import tunnel from 'tunnel';
-import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD, WEEK_TIMELAPSE } from "./settings";
-import { ExpPage, HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
+import { CRAWL_WEEK_START, DAY_TIMELAPSE, PROXY_LIST, RATE_LIMIT_PERIOD, WEEK_TIMELAPSE } from "./settings";
+import { ExpPage, HtmlPage, IConstructorOptionsComplete, ItemPrices, Skill, Timeframe } from "./types";
 import validate from "./validate";
 import { error, bold, pause, printProgress, warning, TabularFunction, getExpPage } from "./utils";
 import persistence from "./persistence";
@@ -249,12 +249,12 @@ async function getAllWeeklyExpPages(): Promise<ExpPage[][]> {
 }
 
 /**
- * Obtain a year's worth of Grand Exchange price data for an item with daily granularity, total of 365 datapoints. Returns undefined if no data was available.
+ * Obtain a year's worth of Grand Exchange price data for an item with daily granularity, total of 365 datapoints. Returns null if no data was available.
  * @param itemID Item Grand Exchange id for which to obtain year price data for.
  * @param proxy Proxy to be used. Defaults to using no proxy.
  * @param numRetries Number of automatic retries. Defaults to MAX_RETRIES.
  */
-async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<TabularFunction | undefined> { // TODO chanfe to | null instead of using undefined
+async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<ItemPrices | null> {
     if (typeof itemID !== 'number' || itemID < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
     if (proxy !== undefined) { validate.proxy(proxy); }
     if (typeof numRetries !== 'number' || numRetries < 0) { throw new TypeError('numRetries must be a number greater than zero.'); }
@@ -311,14 +311,25 @@ async function getYearPriceData(itemID: number, proxy?: string, numRetries: numb
             });
     }
 
+    let itemPrices = persistence.fetchPrices(itemID);
+    if (itemPrices !== null) {
+        // Check that last date is not older than a day.
+        const oneDayAgo = Date.now() - DAY_TIMELAPSE;
+        if (itemPrices.prices.x[itemPrices.prices.length - 1] > oneDayAgo) {
+            return itemPrices;
+        }
+    }
+
     const response: [number, number][] | null = await getResponseRecursively(numRetries);
     // null if no data is available or bad request
-    if (response === null) { return; }
-    const timeSeries: TabularFunction = new TabularFunction();
+    if (response === null) { return null; }
+    const prices: TabularFunction = new TabularFunction();
     response.forEach(([timestamp, price]) => {
-        timeSeries.addDatapoint(price, timestamp);
+        prices.addDatapoint(price, timestamp);
     });
-    return timeSeries;
+    itemPrices = { id: itemID, prices };
+    persistence.savePrices(itemPrices);
+    return itemPrices;
 }
 
 export default {
