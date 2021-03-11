@@ -49,7 +49,7 @@ export class TabularFunction {
     }
 
     /**
-     * Add a point to the function. Datapoint will be placed in the series according to the independent variable's natural ordering.
+     * Add a point to the function. Datapoint will be placed in the series according to the independent variable's natural ordering. If xi exists in series, its corresponding f value will be updated to fi.
      * @param fi Datapair's dependent value.
      * @param xi Datapair's independent value.
      */
@@ -66,11 +66,14 @@ export class TabularFunction {
             this.#x.unshift(xi);
             return
         }
-        for (let i = 1; i < this.#x.length; i++) {
+        for (let i = 0; i < this.#x.length; i++) {
             if (xi < this.#x[i]) {
                 this.#f.splice(i, 0, fi);
                 this.#x.splice(i, 0, xi);
                 return;
+            } else if (xi === this.#x[i]) {
+                this.#f[i] = fi;
+                return
             }
         }
         this.#f.push(fi);
@@ -83,6 +86,8 @@ export class TabularFunction {
      */
     concat(fnTabular: TabularFunction): TabularFunction {
         if (!(fnTabular instanceof TabularFunction)) { throw new TypeError('Function must be of type TabularFunction to be concatenated with a TabularFunction.'); }
+
+        // TODO maintain natural ordering for independent variable.
 
         return new TabularFunction(this.#f.concat(fnTabular.f), this.#x.concat(fnTabular.x));
     }
@@ -115,6 +120,73 @@ export class TabularFunction {
 
         const integrationSection = this.slice(from, to);
         return integrate(integrationSection.f, integrationSection.x);
+    }
+
+    /**
+     * Create a new TabularFunction with domain containing intersection of its own independent series and the passed domainSeries. By default 'linear' interpolation method is used.
+     * 
+     * Available interpolation methods:
+     *  * 'rightshift' - shift dependent variable value's to the right for each missing point (shifts left only for points left of function domain).
+     *  * 'linear' (default) - calculate line between available datapoints and use these lines to interpolate missing points. Method left-shift at start and right-shift at end.
+     * @param domainSeries 
+     */
+    interpolate(domainSeries: number[], method: string = 'linear'): TabularFunction {
+        if (this.length === 0) { throw new Error('Cannot interpolate: TabularFunction is empty.'); }
+        if (!(domainSeries instanceof Array)) { throw new TypeError('Series to interpolate must be number Array.'); }
+        domainSeries.forEach(v => {
+            if (typeof v !== 'number') { throw new TypeError('Series to interpolate must be an Array of all numbers.') }
+        });
+
+        if (domainSeries.length === 0) {
+            return new TabularFunction(this.#f.slice(), this.#x.slice())
+        }
+
+        const independentVarSeries: number[] = this.#x.concat(domainSeries);
+        independentVarSeries.sort((a, b) => a - b);
+        const outFn = new TabularFunction();
+        let functionIndex = 0;
+        switch (method) {
+            case 'linear':
+                // Handle potential leftshift at begining
+                while (independentVarSeries[0] < this.#x[0]) {
+                    outFn.addDatapoint(this.#f[0], independentVarSeries.shift() as number);
+                }
+                // rightshift
+                while (independentVarSeries.length > 0 && functionIndex < this.length - 1) {
+                    if (independentVarSeries[0] === this.#x[functionIndex]) {
+                        outFn.addDatapoint(this.#f[functionIndex], independentVarSeries.shift() as number);
+                    } else if (independentVarSeries[0] < this.#x[functionIndex + 1]) {
+                        // Slope-intersect form
+                        const slope = (this.#f[functionIndex + 1] - this.#f[functionIndex]) / (this.#x[functionIndex + 1] - this.#x[functionIndex]);
+                        const xi = independentVarSeries.shift() as number;
+                        outFn.addDatapoint(slope * (xi - this.#x[functionIndex]) + this.#f[functionIndex], xi);
+                    } else {
+                        functionIndex++;
+                    }
+                }
+                // rightshift at end
+                independentVarSeries.forEach(xi => outFn.addDatapoint(this.#f[this.length - 1], xi));
+                break;
+            case 'rightshift':
+                // Handle potential leftshift at begining
+                while (independentVarSeries[0] < this.#x[0]) {
+                    outFn.addDatapoint(this.#f[0], independentVarSeries.shift() as number);
+                }
+                // rightshift
+                while (independentVarSeries.length > 0 && functionIndex < this.length - 1) {
+                    if (independentVarSeries[0] < this.#x[functionIndex + 1]) {
+                        outFn.addDatapoint(this.#f[functionIndex], independentVarSeries.shift() as number);
+                    } else {
+                        functionIndex++;
+                    }
+                }
+                // rightshift at end
+                independentVarSeries.forEach(xi => outFn.addDatapoint(this.#f[this.length - 1], xi));
+                break;
+            default:
+                throw new TypeError('Method must be a string from available options (see documentation).')
+        }
+        return outFn;
     }
 
     /**

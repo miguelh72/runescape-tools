@@ -227,7 +227,7 @@ async function getAllWeeklyExpPages(): Promise<ExpPage[][]> {
  * @param proxy Proxy to be used. Defaults to using no proxy.
  * @param numRetries Number of automatic retries. Defaults to MAX_RETRIES.
  */
-async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<TabularFunction | undefined> {
+async function getYearPriceData(itemID: number, proxy?: string, numRetries: number = MAX_RETRIES): Promise<TabularFunction | undefined> { // TODO chanfe to | null instead of using undefined
     if (typeof itemID !== 'number' || itemID < 0) { throw new TypeError('Item ID must be a number greater than zero.'); }
     if (proxy !== undefined) { validate.proxy(proxy); }
     if (typeof numRetries !== 'number' || numRetries < 0) { throw new TypeError('numRetries must be a number greater than zero.'); }

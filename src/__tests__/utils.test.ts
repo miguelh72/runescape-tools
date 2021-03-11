@@ -144,6 +144,66 @@ test('Using tabular functions', () => {
     expect(fn.integrate(from, to)).toBe(0.5 * (f[to - 1] + f[from]) * (x[to - 1] - x[from]));
 });
 
+test('Interpolate TabularFunction', () => {
+    let length = 4;
+    let x = Array.from({ length }, (_, i) => 2 * (i + 1));
+    let f = Array.from({ length }, (_, i) => i + 1);
+
+    // rightshift method:
+    let fn = new TabularFunction(f, x);
+    // Trivial
+    let fnResult = fn.interpolate([], 'rightshift');
+    expect(fnResult.x).toEqual(x);
+    expect(fnResult.f).toEqual(f);
+    // At begining case
+    x = [-1, 0]
+    fnResult = fn.interpolate(x, 'rightshift');
+    expect(fnResult.x).toEqual([-1, 0, 2, 4, 6, 8]);
+    expect(fnResult.f).toEqual([1, 1, 1, 2, 3, 4]);
+    // Whithin function case
+    x = [3, 4, 5]
+    fnResult = fn.interpolate(x, 'rightshift');
+    expect(fnResult.x).toEqual([2, 3, 4, 5, 6, 8]);
+    expect(fnResult.f).toEqual([1, 1, 2, 2, 3, 4]);
+    // At end case
+    x = [9, 10]
+    fnResult = fn.interpolate(x, 'rightshift');
+    expect(fnResult.x).toEqual([2, 4, 6, 8, 9, 10]);
+    expect(fnResult.f).toEqual([1, 2, 3, 4, 4, 4]);
+    // Full wrapping case
+    x = Array.from({ length: (length + 2) * 2 }, (_, i) => i);
+    fnResult = fn.interpolate(x, 'rightshift');
+    expect(fnResult.x).toEqual(x);
+    expect(fnResult.f).toEqual([1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4]);
+
+    // linear method
+    fn = new TabularFunction([2, 4, 6, 8], [2, 4, 6, 8]);
+    // Trivial
+    fnResult = fn.interpolate([], 'linear');
+    expect(fnResult.x).toEqual([2, 4, 6, 8]);
+    expect(fnResult.f).toEqual([2, 4, 6, 8]);
+    // At begining case
+    x = [0, 1]
+    fnResult = fn.interpolate(x, 'linear');
+    expect(fnResult.x).toEqual([0, 1, 2, 4, 6, 8]);
+    expect(fnResult.f).toEqual([2, 2, 2, 4, 6, 8,]);
+    // Whithin function case
+    x = [3, 4, 5]
+    fnResult = fn.interpolate(x, 'linear');
+    expect(fnResult.x).toEqual([2, 3, 4, 5, 6, 8]);
+    expect(fnResult.f).toEqual([2, 3, 4, 5, 6, 8]);
+    // At end case
+    x = [9, 10]
+    fnResult = fn.interpolate(x, 'linear');
+    expect(fnResult.x).toEqual([2, 4, 6, 8, 9, 10]);
+    expect(fnResult.f).toEqual([2, 4, 6, 8, 8, 8]);
+    // Full wrapping case
+    x = Array.from({ length: (length + 2) * 2 }, (_, i) => i);
+    fnResult = fn.interpolate(x,); // linear is default
+    expect(fnResult.x).toEqual(x);
+    expect(fnResult.f).toEqual([2, 2, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8]);
+});
+
 test('Convert HtmlPage to ExpPage', () => {
     // Case page doesnt have data
     let expPage = getExpPage(notEnoughPlayersPageExample);
@@ -156,7 +216,7 @@ test('Convert HtmlPage to ExpPage', () => {
     // Case page is not experience page
     expect(() => expPage = getExpPage(internetingishardPage)).toThrowError();
 });
-
+/*
 test('\nVISUAL INSPECTION REQUIRED\nPlot linear TabularFunction', () => {
     let length = 11;
     let x = Array.from({ length }, (_, i) => 2 * i);
@@ -164,3 +224,4 @@ test('\nVISUAL INSPECTION REQUIRED\nPlot linear TabularFunction', () => {
     let fn = new TabularFunction(f, x);
     fn.plot({ title: 'Linear function with 0.5 slope', xLegend: 'x-axis legend', yLegend: 'y-axis legend' });
 })
+*/
