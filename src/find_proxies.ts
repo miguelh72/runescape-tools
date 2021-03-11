@@ -2,11 +2,10 @@ import Nightmare from 'nightmare';
 const ProxyList = require('proxy-sources');
 import chalk from 'chalk';
 import { IConstructorOptionsComplete } from './types';
-import crawler from './crawler';
 import validate from './validate';
 import { getExpPage } from './utils';
 
-const url = 'https://secure.runescape.com/m=hiscore/ranking?category_type=0&table=0&time_filter=1&page=1';
+const url = 'http://secure.runescape.com/m=hiscore/ranking?category_type=0&table=9&time_filter=1&date=1614368196557&page=3001';
 const NUM_CHECKS = 2;
 
 async function getWorkingProxyList(): Promise<string[]> {
