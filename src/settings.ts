@@ -1,5 +1,3 @@
-import { WEEK_TIMELAPSE } from "./utils";
-
 export const PROXY_LIST: string[] = [
     '34.92.50.186:3128',
     '212.98.243.155:3128',
@@ -25,6 +23,8 @@ export const RATE_LIMIT_PERIOD: number = 1000; // ms
 
 export const DATASTORE_FOLDER: string = 'datastore';
 
+export const DAY_TIMELAPSE: number = 86400000; // ms
+export const WEEK_TIMELAPSE: number = 604800000; // ms
 const BASE_WEEK_START: number = 1599248196557;
 export const CRAWL_WEEK_START: number = (() => {
     // Calculate first week start 365 days ago as a multiple of BASE_WEEK_START so that filenames match in datastore

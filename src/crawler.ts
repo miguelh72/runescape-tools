@@ -1,10 +1,10 @@
 import Nightmare from "nightmare";
 import got, { OptionsOfJSONResponseBody } from "got";
 import tunnel from 'tunnel';
-import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD } from "./settings";
+import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD, WEEK_TIMELAPSE } from "./settings";
 import { ExpPage, HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
 import validate from "./validate";
-import { error, bold, pause, printProgress, warning, WEEK_TIMELAPSE, TabularFunction, ok, getExpPage } from "./utils";
+import { error, bold, pause, printProgress, warning, TabularFunction, ok, getExpPage } from "./utils";
 import persistence from "./persistence";
 
 

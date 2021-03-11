@@ -8,9 +8,6 @@ import parse from 'node-html-parser';
 
 const NUM_PROGRESS_BARS: number = 70;
 
-export const DAY_TIMELAPSE: number = 86400000; // ms
-export const WEEK_TIMELAPSE: number = 604800000; // ms
-
 export const error: Chalk = chalk.bold.red;
 export const warning: Chalk = chalk.bold.yellow;
 export const ok: Chalk = chalk.bold.green;

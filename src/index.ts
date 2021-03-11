@@ -1,7 +1,7 @@
-import grandexchange from './grandexchange';
-import highscores from './highscores';
 import { Skill } from './types';
 import { TabularFunction } from './utils';
+import grandexchange from './grandexchange';
+import highscores from './highscores';
 
 // Quickly test code below during dev
 (async () => {
@@ -12,7 +12,7 @@ import { TabularFunction } from './utils';
     console.log();
     const itemID: number = grandexchange.searchItemList(itemName)[0].id;
     const itemPrices: TabularFunction = await grandexchange.getYearPriceData(itemID) as TabularFunction;
-    const expGainsInterpolated: TabularFunction = expGains.interpolate(itemPrices.x);
+    const expGainsInterpolated: TabularFunction = expGains.interpolate(itemPrices.x, 'rightshift');
 
     itemPrices.plot({ title: itemName + ' Prices' });
     expGainsInterpolated.plot({ title: Skill[skill] + ' Interpolated Exp Gain Per Week' });
