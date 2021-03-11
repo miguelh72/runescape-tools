@@ -89,7 +89,7 @@ function fetchExpPage(url: string): ExpPage | null {
 }
 
 /**
- * Save ExpPage to storage.
+ * Save ExpPage to storage. Replaces page content page with matching url existed in storage.
  * @param expPage ExpPage to be saved to persistent storage.
  */
 function saveExpPage(expPage: ExpPage): void {

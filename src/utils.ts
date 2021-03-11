@@ -305,7 +305,7 @@ function doesExpPageHaveData(page: HtmlPage): boolean {
     } else if (parse(page.html).querySelector('div.tableWrap') !== null) {
         return true
     } else {
-        throw new Error("Page has highscore URL but it does not contain neither data nor a not enough players response. Perhaps it's a critical server error page.");
+        throw new Error(`Page has highscore URL but it does not contain neither data nor a not enough players response. Perhaps it's a critical server error page.\nURL: ${page.url}`);
     }
 }
 function getPageTotalExp(page: HtmlPage): number {

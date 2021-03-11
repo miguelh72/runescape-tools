@@ -4,7 +4,7 @@ import tunnel from 'tunnel';
 import { CRAWL_WEEK_START, PROXY_LIST, RATE_LIMIT_PERIOD, WEEK_TIMELAPSE } from "./settings";
 import { ExpPage, HtmlPage, IConstructorOptionsComplete, Skill, Timeframe } from "./types";
 import validate from "./validate";
-import { error, bold, pause, printProgress, warning, TabularFunction, ok, getExpPage } from "./utils";
+import { error, bold, pause, printProgress, warning, TabularFunction, getExpPage } from "./utils";
 import persistence from "./persistence";
 
 
@@ -14,9 +14,12 @@ const PRICE_DATA_ENDPOINT: string = 'http://www.grandexchangecentral.com/include
 const MAX_RETRIES = 3; // maximum number of retries per URL
 
 let _rateLimitPeriod: number = RATE_LIMIT_PERIOD;
-const _proxyErrorCounter: [number, string][] = Array.from({ length: PROXY_LIST.length }, (_, i) => [0, PROXY_LIST[i]]);
-const PROXY_DUMP_LIMIT = 10; // Remove proxies that fail more than this number of times.
-// TODO change this to an error rate limit instead
+const _proxyErrorCounter: { [key: string]: { timesUsed: number, timesFailed: number } } = PROXY_LIST.reduce((counter: { [key: string]: { timesUsed: number, timesFailed: number } }, proxy: string) => {
+    counter[proxy] = { timesUsed: 0, timesFailed: 0 };
+    return counter;
+}, {});
+const PROXY_DUMP_RATE = 0.3; // Percent as ratio
+const MIN_USED_TIMES_FOR_DUMP = 10;
 
 /**
  * Error thown when electron browser has an unknown error.
@@ -58,8 +61,8 @@ const proxyGenerator: Generator<string> = (function* getProxyGenerator(): Genera
     let usingProxyNumber: number = 0;
     while (true) {
         if (usingProxyNumber >= PROXY_LIST.length) { usingProxyNumber %= PROXY_LIST.length; }
-        yield PROXY_LIST[usingProxyNumber];
-        usingProxyNumber++;
+        const proxy = PROXY_LIST[usingProxyNumber++];
+        yield proxy;
     }
 })();
 
@@ -68,22 +71,18 @@ const proxyGenerator: Generator<string> = (function* getProxyGenerator(): Genera
  * @param proxy Proxy to log error event for.
  */
 function logProxyErrorEvent(proxy: string): void {
-    let indexErrorCounter = 0;
-    for (const pxy of _proxyErrorCounter) {
-        if (proxy === pxy[1]) {
-            pxy[0]++;
-            // Dump proxy if exceed limit
-            if (pxy[0] >= PROXY_DUMP_LIMIT) {
-                let index = PROXY_LIST.indexOf(pxy[1]);
-                PROXY_LIST.splice(index, 1)
-                _proxyErrorCounter.splice(indexErrorCounter, 1);
-                console.log(error(`\nDumped proxy ${pxy[1]} due to too many errors.`));
-            }
-            return;
+    if (_proxyErrorCounter[proxy] !== undefined) {
+        _proxyErrorCounter[proxy].timesFailed++;
+        if (_proxyErrorCounter[proxy].timesUsed >= MIN_USED_TIMES_FOR_DUMP && (_proxyErrorCounter[proxy].timesFailed / _proxyErrorCounter[proxy].timesUsed) >= PROXY_DUMP_RATE) {
+            let index = PROXY_LIST.indexOf(proxy);
+            if (index === -1) { throw new Error('proxy was not found in PROXY_LIST.'); }
+            PROXY_LIST.splice(index, 1)
+            delete _proxyErrorCounter[proxy];
+            return console.log(error(`\nDumped proxy ${proxy} due to too many errors.`));
         }
-        indexErrorCounter++;
+    } else {
+        console.log(`Proxy ${proxy} was not found in proxyErrorCounter. Was it previously dumped?`);
     }
-    throw new Error('proxy was not found in PROXY_LIST.');
 }
 
 /**
@@ -91,11 +90,16 @@ function logProxyErrorEvent(proxy: string): void {
  * @param top The top number of proxies, by number of error events, to display.
  */
 function printProxyErrorCount(top: number = PROXY_LIST.length): void {
-    if (top !== undefined && (typeof top !== 'number' || top < 0 || top > PROXY_LIST.length)) { throw new TypeError('top must be a number greater than 0 and less than the number of proxies.'); }
+    if (top !== undefined && (typeof top !== 'number' || top < 0)) { throw new TypeError('top must be a number greater than 0.'); }
+    if (top > PROXY_LIST.length) { top = PROXY_LIST.length; }
 
-    _proxyErrorCounter.sort((a, b) => b[0] - a[0]);
-    console.log(ok('\nProxy error report!'));
-    console.log({ proxyErrorCount: _proxyErrorCounter.slice(0, top) });
+    const proxyErrorRate: { proxy: string, errorRate: number }[] = [];
+    for (const proxy in _proxyErrorCounter) {
+        proxyErrorRate.push({ proxy, errorRate: _proxyErrorCounter[proxy].timesFailed / _proxyErrorCounter[proxy].timesUsed })
+    }
+    proxyErrorRate.sort((a, b) => b.errorRate - a.errorRate);
+    console.log(bold('\nProxy error report!'));
+    console.log({ proxyErrorRate: proxyErrorRate.slice(0, top) });
 }
 
 /**
@@ -120,23 +124,35 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
         };
     }
 
-    const html: string = await new Nightmare(crawlerOptions)
-        .goto(url)
-        .wait('body')
-        .evaluate(() => document.documentElement.outerHTML)
-        .end()
-        .then((response: string) => response)
-        .catch((err: Error) => {
-            if (useProxy) {
-                // TODO Handle retry with recursive call
-                logProxyErrorEvent(crawlerOptions.switches['proxy-server']);
-                throw new ElectronUnknownError(`Error using proxy: ${crawlerOptions.switches['proxy-server']}. ${err.message}`);
-            } else {
-                throw new ElectronUnknownError(err.name + ': ' + err.message);
-            }
-        });
+    async function loadPageWithRetries(retry: number = MAX_RETRIES): Promise<string> {
+        if (useProxy && _proxyErrorCounter[crawlerOptions.switches['proxy-server']] !== undefined) {
+            _proxyErrorCounter[crawlerOptions.switches['proxy-server']].timesUsed++;
+        }
+        return await new Nightmare(crawlerOptions)
+            .goto(url)
+            .wait('body')
+            .evaluate(() => document.documentElement.outerHTML)
+            .end()
+            .then((response: string) => pause(_rateLimitPeriod, response) as any)
+            .catch((err: Error) => {
+                if (useProxy) {
+                    logProxyErrorEvent(crawlerOptions.switches['proxy-server']);
+                    if (retry > 1) {
+                        return loadPageWithRetries(--retry);
+                    } else {
+                        throw new ElectronUnknownError(`Error using proxy: ${crawlerOptions.switches['proxy-server']}. ${err.message}`);
+                    }
+                } else {
+                    if (retry > 1) {
+                        return loadPageWithRetries(--retry);
+                    } else {
+                        throw new ElectronUnknownError(err.name + ': ' + err.message);
+                    }
+                }
+            });
+    }
 
-    await pause(_rateLimitPeriod);
+    const html: string = await loadPageWithRetries();
     return { url, html };
 }
 
@@ -145,13 +161,12 @@ async function loadHtmlPage(url: string, useProxy: boolean = false): Promise<Htm
  * Pages without enough players will not be included in return array.
  * @param skill Skill for which to load pages.
  */
-// TODO add recursive retries
 async function getWeeklyExpPages(skill: Skill): Promise<ExpPage[]> {
     validate.skill(skill);
 
-    const oneWeekBeforeToday = Date.now() - WEEK_TIMELAPSE;
+    const today = Date.now();
     const weeksStartTime = [CRAWL_WEEK_START];
-    while (weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE < oneWeekBeforeToday) {
+    while (weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE < today) {
         weeksStartTime.push(weeksStartTime[weeksStartTime.length - 1] + WEEK_TIMELAPSE);
     }
     const allWeeksHighscoreUrlSet = weeksStartTime.reduce((pages: string[], weekStartTime: number): string[] =>
@@ -159,6 +174,7 @@ async function getWeeklyExpPages(skill: Skill): Promise<ExpPage[]> {
 
     const expPages: ExpPage[] = [];
     let urlIndex = 0;
+    let numPagesWithoutData = 0;
     printProgress(0);
     let hadProxyErrorEvent = false;
     while (urlIndex < allWeeksHighscoreUrlSet.length) {
@@ -173,13 +189,17 @@ async function getWeeklyExpPages(skill: Skill): Promise<ExpPage[]> {
                         .catch((err: Error) => {
                             // Allow failure with notification. This allows you to benefit from other proxies running in parallel at expense of ensuring all data loaded.
                             console.log(warning('\n' + err.message));
-                            hadProxyErrorEvent = true;
+                            if (err instanceof ElectronUnknownError) {
+                                hadProxyErrorEvent = true;
+                            } // else could be critical server error
                             return null;
                         }));
             } else {
                 proxyIndex--; // Proxy was not used
                 if (storedExpPage.hasData) {
                     expPages.push(storedExpPage);
+                } else {
+                    numPagesWithoutData++;
                 }
             }
         }
@@ -188,9 +208,11 @@ async function getWeeklyExpPages(skill: Skill): Promise<ExpPage[]> {
             .then((expPages: (ExpPage | null)[]) =>
                 expPages.forEach(expPage => {
                     if (expPage !== null) {
+                        persistence.saveExpPage(expPage);
                         if (expPage.hasData) {
                             expPages.push(expPage);
                         } else {
+                            numPagesWithoutData++;
                             console.log(warning(`\nThere were not enough players at URL:${expPage.url}\nEndpoint has been saved for future calls.`));
                         }
                     }
@@ -199,11 +221,16 @@ async function getWeeklyExpPages(skill: Skill): Promise<ExpPage[]> {
                 printProgress(Math.round((urlIndex / allWeeksHighscoreUrlSet.length) * 100));
             });
     }
-    printProgress(100);
     if (hadProxyErrorEvent) {
         printProxyErrorCount();
     }
-    return expPages;
+    if (expPages.length + numPagesWithoutData !== allWeeksHighscoreUrlSet.length) {
+        console.log('\nNot all pages could be loaded. Retrying to fetch experience gain data for skill: ' + bold(Skill[skill]));
+        return getWeeklyExpPages(skill);
+    } else {
+        printProgress(100);
+        return expPages;
+    }
 }
 
 /**
